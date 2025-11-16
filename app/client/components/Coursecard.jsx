@@ -10,8 +10,8 @@ const Coursecard = ({ id, Course }) => {
 
       {/* CONTENT */}
       <div className="grow">
+                <h2 className="text-2xl mt-2 text-black line-clamp-3">{Course}</h2>
         <h3 className="font-bold text-black text-sm">ID: {id}</h3>
-        <p className="text-sm mt-2 text-black line-clamp-3">{Course}</p>
       </div>
 
       {/* BUTTON AREA (Right Bottom) */}

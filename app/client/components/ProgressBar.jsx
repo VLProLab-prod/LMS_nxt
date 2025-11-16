@@ -5,12 +5,12 @@ import { Box, Stepper, Step, StepLabel, Tooltip } from '@mui/material';
 const ProgressBar = ({ status }) => {
   const steps = [
     "planned",
-    "script", 
-    "record",
-    "edit",
-    "upload",
-    "review",
-    "publish",
+    "scripted", 
+    "recorded",
+    "edited",
+    "uploaded",
+    "reviewed",
+    "published",
   ];
 
   const activeStep = steps.indexOf(status?.toLowerCase());
