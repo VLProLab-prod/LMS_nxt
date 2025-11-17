@@ -23,8 +23,9 @@ async function ProgramDetail({ params }) {
   // Get program info from first course (since all courses in this program will have same program info)
   const programInfo = courses.length > 0 ? {
     name: courses[0].program,
+   // ProgramType:courses[0].program_code || "NA",
     department: courses[0].department,
-    code: courses[0].program_code || 'N/A'
+    code: courses[0].program_code || courses[0].course_code  ||'N/A' //course code correction required
   } : null;
 
   return (
@@ -67,6 +68,8 @@ async function ProgramDetail({ params }) {
                 <Coursecard 
                   id={course.course_id}
                   Course={course.name}
+                   unitCount={course.unit_count}
+                topicCount={course.topic_count}
                 />
               </Grid>
             ))

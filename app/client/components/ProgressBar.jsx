@@ -10,6 +10,7 @@ const ProgressBar = ({ status }) => {
     "edited",
     "uploaded",
     "reviewed",
+    "Apporved",
     "published",
   ];
 

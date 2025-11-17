@@ -14,11 +14,15 @@ import {
 import {Tooltip} from "@mui/material";
 import { Trash,SquarePen,FileCheck } from 'lucide-react';
 import ProgressBar from "../../../../client/components/ProgressBar";
+import Createunitmodal from "../../../../client/components/Createunitmodal";
+import CreateTopicmodal from "../../../../client/components/CreateTopicmodal";
 
 export default function CourseStructureDesign() {
   const [course, setCourse] = useState(null);
   const [expandedUnit, setExpandedUnit] = useState(null);
   const params = useParams();
+  const [open, setOpen] = useState(false);
+  const [isopen,setisopen] = useState(false);
 
   // 🔹 API FUNCTION to fetch course data
   const fetchCourse = async () => {
@@ -148,9 +152,10 @@ export default function CourseStructureDesign() {
                         </div>
                       ))}
 
-                      <Button variant="contained" className="w-full mt-2">
+                      <Button variant="contained" className="w-full mt-2" onClick={()=>setisopen(true)}>
                         + Add Topic
                       </Button>
+                    <CreateTopicmodal open={isopen} onClose={()=>setisopen(false)}/>
                     </div>
                   </AccordionDetails>
                 </Accordion>
@@ -161,9 +166,13 @@ export default function CourseStructureDesign() {
               </p>
             )}
 
-            <Button variant="outlined" className="w-full">
+            <Button variant="outlined" className="w-full" onClick={()=>setOpen(true)}>
               + Add Unit
             </Button>
+            <Createunitmodal
+        open={open}
+        onClose={() => setOpen(false)}
+      />
           </div>
         </CardContent>
       </Card>
