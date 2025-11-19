@@ -1,0 +1,4 @@
+SET FOREIGN_KEY_CHECKS=0;
+USE lms;
+SOURCE lms-final-master.sql;
+SET FOREIGN_KEY_CHECKS=1;

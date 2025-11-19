@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import { AppBar, Toolbar, Drawer, InputBase, Box } from "@mui/material";
 import { Search, Menu } from "@mui/icons-material";
 import { LogOut } from "lucide-react"; // Lucide Signout Icon
+import { useRouter } from "next/navigation";
 
 const Nav = () => {
   const [open, setOpen] = useState(false);
@@ -17,6 +18,7 @@ const Nav = () => {
     setactive(value);
   };
 
+  const router = useRouter();
   return (
     <>
       <AppBar position="fixed">
@@ -70,9 +72,20 @@ const Nav = () => {
                   ? "bg-black text-white" 
                   : "bg-white text-black hover:bg-gray-200"
               }`}
-              onClick={() => isactive(2)}
+              onClick={()=>{router.push("/teachers/courses"); isactive(2);}}
             >
               Courses
+            </button>
+
+             <button
+              className={`rounded-xl px-3 py-2 transition-all duration-200 ${
+                active === 3 
+                  ? "bg-black text-white" 
+                  : "bg-white text-black hover:bg-gray-200"
+              }`}
+              onClick={()=>{router.push("/teachers/programs"); isactive(3);}}
+            >
+              Programs
             </button>
           </div>
 
