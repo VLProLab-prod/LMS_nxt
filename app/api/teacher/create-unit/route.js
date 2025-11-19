@@ -68,6 +68,13 @@ export async function POST(req) {
     await fs.mkdir(fullPath, { recursive: true });
     await fs.mkdir(path.join(fullPath, "Materials"), { recursive: true });
 
+    // Calculate the next order_index for the new unit
+    const [orderResult] = await pool.query(
+      `SELECT COALESCE(MAX(order_index), 0) + 1 as next_order FROM CourseSections WHERE course_id = ?`,
+      [course_id]
+    );
+    const nextOrderIndex = orderResult[0].next_order;
+
     //optional: save PPT
     let pptFilename = null;
 
@@ -87,7 +94,7 @@ export async function POST(req) {
       [
         course_id,
         unit_title,
-        0,
+        nextOrderIndex,
         unit_code,
         prof_name,
         fullPath,
