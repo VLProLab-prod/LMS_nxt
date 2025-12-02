@@ -12,9 +12,9 @@ import {
   CardHeader,
   Box,
   Tooltip,
-  IconButton, 
+  IconButton,
   Typography,
-  Chip,      
+  Chip,
   Paper,
   ButtonGroup,
   Dialog,
@@ -23,14 +23,14 @@ import {
   DialogActions,
   TextField
 } from "@mui/material";
-import { 
-  Trash, 
-  FileCheck, 
-  CheckCircle, 
-  Video, 
-  Edit, 
-  Upload, 
-  CheckSquare 
+import {
+  Trash,
+  FileCheck,
+  CheckCircle,
+  Video,
+  Edit,
+  Upload,
+  CheckSquare
 } from "lucide-react";
 import VideoUploadModal from "../../../../client/Editorcomponents/UploadModal";
 import ProgressBar from "../../../../client/components/ProgressBar";
@@ -43,14 +43,14 @@ export default function CourseStructureDesign() {
   const [expandedUnit, setExpandedUnit] = useState(null);
   const params = useParams();
 
-  
+
   const [openUnitModal, setOpenUnitModal] = useState(false);
   const [openTopicModal, setOpenTopicModal] = useState(false);
   const [openScriptModal, setOpenScriptModal] = useState(false);
   const [openUploadModal, setOpenUploadModal] = useState(false);
 
-  
-  const [currentUnitId, setCurrentUnitId] = useState(null); 
+
+  const [currentUnitId, setCurrentUnitId] = useState(null);
   const [currentTopic, setCurrentTopic] = useState(null);
 
   // Workflow phases mapping
@@ -60,10 +60,10 @@ export default function CourseStructureDesign() {
     "recorded",     // 2 - editing phase
     "edited",       // 3
     "uploaded",     // 4
-    "review",       // 5
+    "under_review", // 5
     "approved",     // 6
     "published"     // 7 - final phase
-  ]; 
+  ];
 
   //  API FUNCTION to fetch course data
   const fetchCourse = async () => {
@@ -85,14 +85,14 @@ export default function CourseStructureDesign() {
     }
   }, [params.id]);
 
-  
+
   const handleOpenTopicModal = (unitId) => {
     setCurrentUnitId(unitId); // Set context
     setOpenTopicModal(true);
   };
 
   const handleOpenScriptModal = (topic, unitIndex, topicIndex) => {
-  
+
     setCurrentTopic({ ...topic, unitIndex, topicIndex });
     setOpenScriptModal(true);
   };
@@ -115,7 +115,7 @@ export default function CourseStructureDesign() {
 
       // Refresh the course data to show the updated list
       fetchCourse();
-      
+
     } catch (error) {
       console.error("Error deleting topic:", error);
       alert(`Error deleting topic: ${error.message}`);
@@ -142,7 +142,7 @@ export default function CourseStructureDesign() {
 
       // Refresh the course data
       fetchCourse();
-      
+
     } catch (error) {
       console.error("Error updating workflow:", error);
       alert(`Error updating workflow: ${error.message}`);
@@ -198,11 +198,9 @@ export default function CourseStructureDesign() {
               {course.name || course.course_name}
             </span>
           }
-          subheader={`${course.department || "Department"} • ${
-            course.program || "Program"
-          } • ${course.units ? course.units.length : 0} units • ${
-            getAllTopics().length
-          } topics`}
+          subheader={`${course.department || "Department"} • ${course.program || "Program"
+            } • ${course.units ? course.units.length : 0} units • ${getAllTopics().length
+            } topics`}
         />
       </Card>
 
@@ -250,10 +248,10 @@ export default function CourseStructureDesign() {
                           unit.topics.map((topic, topicIndex) => {
                             const topicStatus =
                               topic.status?.toLowerCase() || "planned";
-                            
+
                             // Get current workflow phase index
                             const currentPhaseIndex = workflowPhases.indexOf(topicStatus);
-                            
+
                             // Button states based on workflow
                             const isRecordEnabled = currentPhaseIndex === 1; // scripted
                             const isEditEnabled = currentPhaseIndex === 2; // recorded
@@ -293,11 +291,10 @@ export default function CourseStructureDesign() {
                                     {topic.name}
                                   </Typography>
                                   <Chip
-                                    label={`${
-                                      topic.estimatedTime ||
+                                    label={`${topic.estimatedTime ||
                                       topic.estimated_duration_min ||
                                       0
-                                    } min`}
+                                      } min`}
                                     size="small"
                                     sx={{ bgcolor: "grey.200" }}
                                   />
@@ -448,7 +445,7 @@ export default function CourseStructureDesign() {
             <Button
               variant="outlined"
               className="w-full"
-              onClick={() => setOpenUnitModal(true)} 
+              onClick={() => setOpenUnitModal(true)}
             >
               + Add Unit
             </Button>
@@ -456,7 +453,7 @@ export default function CourseStructureDesign() {
         </CardContent>
       </Card>
 
-     
+
       <Createunitmodal
         open={openUnitModal}
         onClose={() => setOpenUnitModal(false)}
@@ -467,14 +464,14 @@ export default function CourseStructureDesign() {
         open={openTopicModal}
         onClose={() => setOpenTopicModal(false)}
         unitId={currentUnitId} // ✨ Pass unitId
-        // Note: You must update CreateTopicmodal to accept and use this 'unitId' prop
+      // Note: You must update CreateTopicmodal to accept and use this 'unitId' prop
       />
 
       <ScriptDialogue
         open={openScriptModal}
         onClose={() => setOpenScriptModal(false)}
         topic={currentTopic} // ✨ Pass full topic object
-        // Note: You must update ScriptDialogue to accept and use this 'topic' prop
+      // Note: You must update ScriptDialogue to accept and use this 'topic' prop
       />
 
       {/* Video Upload Modal */}

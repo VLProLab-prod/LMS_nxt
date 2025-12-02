@@ -28,39 +28,42 @@ export async function GET(req) {
         });
 
         const unitIndex = topic?.section?.orderIndex || 0;
-        // We need to find the topic index within the section. 
-        // Since we don't have it directly, we might need to count or just use ID.
-        // However, the user asked for U{u}V{t}. 
-        // Let's try to get the topic index if possible, or fallback to ID.
-        // A better way is to fetch all topics in the section and find the index.
 
         let topicIndex = 0;
         if (topic && topic.section) {
             const topics = await prisma.contentItem.findMany({
                 where: { sectionId: topic.section.id },
-                orderBy: { id: 'asc' }, // Assuming ordered by ID or creation
+                orderBy: { id: 'asc' },
                 select: { id: true }
             });
             topicIndex = topics.findIndex(t => t.id === parseInt(topicId)) + 1;
         }
 
-        const prefix = `U${unitIndex}V${topicIndex}`;
+        const unitNumber = unitIndex;
+        const topicNumber = topicIndex;
+        const topicName = topic.title || "Topic";
+        const profName = topic.section?.profName || "Prof";
+
+        // Sanitize filename to remove invalid characters
+        const sanitize = (str) => str.replace(/[^a-zA-Z0-9 \-_]/g, "").trim();
+
+        const filenameBase = `U${unitNumber}V${topicNumber} - ${sanitize(topicName)} - ${sanitize(profName)}`;
 
         let fileData = null;
-        let filename = `${prefix}.${type}`;
+        let filename = `${filenameBase}.${type}`;
         let contentType = "application/octet-stream";
 
         if (type === "ppt") {
             fileData = script.pptFileData;
-            filename = `${prefix}.pptx`;
+            filename = `${filenameBase}.pptx`;
             contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
         } else if (type === "doc") {
             fileData = script.docFileData;
-            filename = `${prefix}.docx`;
+            filename = `${filenameBase}.docx`;
             contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         } else if (type === "zip") {
             fileData = script.zipFileData;
-            filename = `${prefix}-materials.zip`;
+            filename = `${filenameBase}-materials.zip`;
             contentType = "application/zip";
         }
 

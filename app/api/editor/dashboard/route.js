@@ -10,13 +10,19 @@ export async function GET() {
     const published = await prisma.contentItem.count({ where: { workflowStatus: "Published" } });
     const inEditing = await prisma.contentItem.count({ where: { workflowStatus: "Editing" } });
     const scripted = await prisma.contentItem.count({ where: { workflowStatus: "Scripted" } });
-    const underReview = await prisma.contentItem.count({ where: { workflowStatus: "Under_Review" } });
+    const underReview = await prisma.contentItem.count({
+      where: {
+        workflowStatus: { in: ["Under_Review", "Post_Editing"] }
+      }
+    });
     const readyForVideo = await prisma.contentItem.count({ where: { workflowStatus: "ReadyForVideoPrep" } });
 
     // 2. Fetch topics in progress (not Published)
     const topicsInProgress = await prisma.contentItem.findMany({
       where: {
-        // Fetch all topics so we can show Published ones too if needed
+        workflowStatus: {
+          not: "Published"
+        }
       },
       include: {
         section: {
@@ -34,7 +40,7 @@ export async function GET() {
     // Helper to map DB status to Frontend status
     const mapStatus = (status) => {
       const map = {
-        "Post_Editing": "Post-Editing",
+        "Post_Editing": "Under_Review",
         "ReadyForVideoPrep": "Ready_for_Video_Prep",
         "Under_Review": "Under_Review",
         "Published": "Published"

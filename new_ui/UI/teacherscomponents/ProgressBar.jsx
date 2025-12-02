@@ -98,13 +98,13 @@ const ProgressBar = ({ status }) => {
     "recorded",
     "edited",
     "uploaded",
-    "review",
+    "under_review",
     "approved",
     "published",
   ];
 
   // --- ✨ UPDATED LOGIC ---
-  
+
   const statusIndex = steps.indexOf(status?.toLowerCase());
   let activeStep;
 
@@ -115,7 +115,7 @@ const ProgressBar = ({ status }) => {
     // If status is "scripted" (index 1) or higher,
     // set the active step to be the *next* one (index 2)
     // This will mark "scripted" as completed (✅)
-    activeStep = statusIndex+1 ;
+    activeStep = statusIndex + 1;
   } else {
     // Default for new topics (status is null, undefined, etc.)
     // Show "planned" as the active step (dot)

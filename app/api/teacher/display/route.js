@@ -134,7 +134,7 @@ function mapWorkflowStatus(dbStatus) {
     Planned: "planned",
     Scripted: "scripted",
     Editing: "editing",
-    Post_Editing: "post-editing",
+    Post_Editing: "under_review",
     ReadyForVideoPrep: "ready_for_video_prep",
     Under_Review: "under_review",
     Published: "published",

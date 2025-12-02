@@ -347,6 +347,7 @@ export default function CourseStructureDesign() {
                                       onClick={() =>
                                         handleDeleteTopic(topic.content_id, topic.name)
                                       }
+                                      disabled={topicStatus === "published"}
                                     >
                                       <Trash />
                                     </IconButton>

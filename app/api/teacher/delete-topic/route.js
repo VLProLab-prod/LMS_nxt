@@ -31,6 +31,14 @@ export async function DELETE(req) {
       );
     }
 
+    // Prevent deletion if topic is Published
+    if (existingTopic.workflowStatus === "Published") {
+      return NextResponse.json(
+        { error: "Cannot delete a published topic." },
+        { status: 403 }
+      );
+    }
+
     // Delete the topic from the database
     const result = await prisma.contentItem.delete({
       where: { id: parseInt(topicId) },
