@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { PlayCircle, Send, CheckCircle } from "lucide-react";
 
-export default function ReviewDialogue({ open, onClose, topic, onFeedbackSubmit, onApprove }) {
+export default function ReviewDialogue({ open, onClose, topic, onFeedbackSubmit, onApprove, canApprove }) {
     const [feedback, setFeedback] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -95,19 +95,21 @@ export default function ReviewDialogue({ open, onClose, topic, onFeedbackSubmit,
                     Cancel
                 </Button>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                        onClick={() => {
-                            if (window.confirm("Are you sure you want to approve this topic?")) {
-                                onApprove(topic.content_id);
-                                onClose();
-                            }
-                        }}
-                        variant="outlined"
-                        color="success"
-                        startIcon={<CheckCircle size={16} />}
-                    >
-                        Approve
-                    </Button>
+                    {canApprove && (
+                        <Button
+                            onClick={() => {
+                                if (window.confirm("Are you sure you want to approve this topic?")) {
+                                    onApprove(topic.content_id);
+                                    onClose();
+                                }
+                            }}
+                            variant="contained" // Changed to contained for better visibility
+                            color="success"
+                            startIcon={<CheckCircle size={16} />}
+                        >
+                            Approve
+                        </Button>
+                    )}
                     <Button
                         onClick={handleSubmit}
                         variant="contained"

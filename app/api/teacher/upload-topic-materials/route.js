@@ -78,7 +78,7 @@ export async function POST(req) {
         if (topic && topic.workflowStatus === 'Planned') {
             await prisma.contentItem.update({
                 where: { id: parseInt(topicId) },
-                data: { workflowStatus: 'Editing' }
+                data: { workflowStatus: 'Scripted' } // ✨ Changed to Scripted (Pending Approval)
             });
         }
 

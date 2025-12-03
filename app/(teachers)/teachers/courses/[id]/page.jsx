@@ -17,7 +17,7 @@ import {
   Chip,
   Paper,
 } from "@mui/material";
-import { Trash, FileCheck, CheckCircle, PlayCircle, MessageSquare } from "lucide-react";
+import { Trash, FileCheck, CheckCircle, PlayCircle, MessageSquare, Send } from "lucide-react";
 import ProgressBar from "../../../../client/components/ProgressBar";
 import Createunitmodal from "../../../../client/components/Createunitmodal";
 import CreateTopicmodal from "../../../../client/components/CreateTopicmodal";
@@ -38,6 +38,9 @@ export default function CourseStructureDesign() {
   const [currentUnitId, setCurrentUnitId] = useState(null);
   const [currentTopic, setCurrentTopic] = useState(null);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const handleBack = () => {
     router.push('/teachers/courses');
   };
@@ -45,14 +48,19 @@ export default function CourseStructureDesign() {
   //  API FUNCTION to fetch course data
   const fetchCourse = async () => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/teacher/display?courseId=${params.id}`);
       if (!res.ok) {
         throw new Error("Failed to fetch course data");
       }
       const data = await res.json();
       setCourse(data);
+      setError(null);
     } catch (error) {
       console.error("Error fetching course:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,11 +151,33 @@ export default function CourseStructureDesign() {
     }
   };
 
-  if (!course) return <p>Loading...</p>;
+  // ✨ New function to approve script (TA only)
+  const handleApproveScript = async (topicId) => {
+    if (!window.confirm("Approve script and send to editor?")) return;
+    try {
+      const res = await fetch(`/api/topics/update-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topicId, newStatus: 'Editing' }),
+      });
+      if (res.ok) fetchCourse();
+      else alert("Failed to approve script");
+    } catch (error) {
+      console.error('Error approving script:', error);
+    }
+  };
+
+  if (loading) return <p className="p-8">Loading...</p>;
+  if (error) return <p className="p-8 text-red-500">Error: {error}</p>;
+  if (!course) return <p className="p-8">Course not found</p>;
 
   const getAllTopics = () => {
     return course.units ? course.units.flatMap((u) => u.topics || []) : [];
   };
+
+  const userRole = course.userRole;
+  const canApprove = userRole === "Teacher Assistant";
+  const canOverwrite = userRole === "Teacher Assistant";
 
   return (
     <div className="space-y-6 p-6">
@@ -299,7 +329,7 @@ export default function CourseStructureDesign() {
                                   <Tooltip
                                     title={
                                       isScriptingDone
-                                        ? "Scripting is complete"
+                                        ? (canOverwrite ? "Edit Script (TA)" : "Scripting is complete")
                                         : "Upload/Edit Script"
                                     }
                                   >
@@ -314,31 +344,45 @@ export default function CourseStructureDesign() {
                                             topicIndex
                                           )
                                         }
-                                        disabled={isScriptingDone} // ✨ REQUIREMENT MET
+                                        disabled={topicStatus === "published" || (isScriptingDone && !canOverwrite)} // ✨ Locked if published
                                       >
                                         <FileCheck />
                                       </IconButton>
                                     </span>
                                   </Tooltip>
 
-                                  <Tooltip
-                                    title={
-                                      isReviewStage
-                                        ? "Approve Topic"
-                                        : "Available only during review stage"
-                                    }
-                                  >
-                                    <span>
+                                  {canApprove && ( // ✨ Conditional Render
+                                    <Tooltip
+                                      title={
+                                        isReviewStage
+                                          ? "Approve Topic"
+                                          : "Available only during review stage"
+                                      }
+                                    >
+                                      <span>
+                                        <IconButton
+                                          size="small"
+                                          disabled={!isReviewStage}
+                                          onClick={() => handleApprove(topic.content_id)}
+                                          color="success"
+                                        >
+                                          <CheckCircle />
+                                        </IconButton>
+                                      </span>
+                                    </Tooltip>
+                                  )}
+
+                                  {canApprove && topicStatus === "scripted" && ( // ✨ Approve Script Button
+                                    <Tooltip title="Approve Script (Send to Editor)">
                                       <IconButton
                                         size="small"
-                                        disabled={!isReviewStage} // ✨ REQUIREMENT MET
-                                        onClick={() => handleApprove(topic.content_id)}
-                                        color="success"
+                                        onClick={() => handleApproveScript(topic.content_id)}
+                                        sx={{ color: "#f59e0b" }}
                                       >
-                                        <CheckCircle />
+                                        <Send />
                                       </IconButton>
-                                    </span>
-                                  </Tooltip>
+                                    </Tooltip>
+                                  )}
 
                                   <Tooltip title="Delete Topic">
                                     <IconButton
@@ -412,6 +456,7 @@ export default function CourseStructureDesign() {
         topic={currentTopic}
         onFeedbackSubmit={handleFeedbackSubmit}
         onApprove={handleApprove}
+        canApprove={canApprove} // ✨ Pass prop
       />
     </div>
   );

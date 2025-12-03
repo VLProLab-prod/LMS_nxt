@@ -17,6 +17,13 @@ export async function GET(req) {
         }
         const userIdInt = parseInt(userId);
 
+        // 0. Fetch User Role
+        const user = await prisma.user.findUnique({
+            where: { id: userIdInt },
+            include: { role: true }
+        });
+        const userRole = user?.role?.roleName || "Teacher";
+
         // 1. Fetch courses assigned to user (Active only) to ensure consistency with "Your Courses"
         const courses = await prisma.course.findMany({
             where: {
@@ -28,6 +35,7 @@ export async function GET(req) {
                 }
             },
             include: {
+                program: true, // ✨ Fetch program details
                 sections: {
                     include: {
                         contents: true
@@ -57,11 +65,7 @@ export async function GET(req) {
             });
         });
 
-        // 3. Fetch topics for review list (using the same filter logic)
-        // We can actually extract this from the courses we just fetched to be perfectly consistent,
-        // but for pagination/sorting purposes usually a separate query is better. 
-        // However, to guarantee consistency, let's filter the already fetched data.
-
+        // 3. Fetch topics for review list
         const topicsForReview = [];
         courses.forEach(course => {
             course.sections.forEach(section => {
@@ -75,7 +79,7 @@ export async function GET(req) {
                             course_id: course.id,
                             course_title: course.title,
                             unit_title: section.title,
-                            program_name: "Unknown Program", // We didn't fetch program in the main query to save bandwidth, can fetch if needed or just leave as is since it's minor
+                            program_name: course.program?.programName || "Unknown Program", // ✨ Map program name
                             videoLink: topic.videoLink
                         });
                     }
@@ -90,7 +94,9 @@ export async function GET(req) {
                 videosToReview,
                 videosPublished
             },
-            topicsForReview
+            topicsForReview,
+            userRole, // ✨ Return user role
+            canApprove: user?.role?.canApproveContent || false // ✨ Return approval permission
         });
 
     } catch (error) {

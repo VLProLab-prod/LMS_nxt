@@ -27,6 +27,7 @@ enum WorkflowStatus {
   Post_Editing  @map("Post-Editing")
   ReadyForVideoPrep @map("Ready_for_Video_Prep")
   Under_Review  @map("Under_Review")
+  Approved
   Published
 }
 
@@ -61,6 +62,8 @@ model Role {
   canEditCourses    Boolean @default(false) @map("can_edit_courses")
   canManageSystem   Boolean @default(false) @map("can_manage_system")
   canUploadContent  Boolean @default(false) @map("can_upload_content")
+  canApproveContent Boolean @default(false) @map("can_approve_content")
+  canPublishContent Boolean @default(false) @map("can_publish_content")
 
   users User[]
 

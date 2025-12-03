@@ -1,10 +1,23 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
 export async function GET() {
   try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("userId")?.value;
+    let canPublish = false;
+
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: parseInt(userId) },
+        include: { role: true }
+      });
+      canPublish = user?.role?.canPublishContent || false;
+    }
+
     // 1. Fetch Active courses (same as course list)
     const courses = await prisma.course.findMany({
       where: {
@@ -15,7 +28,9 @@ export async function GET() {
           include: {
             contents: {
               include: {
-                assignedEditor: true,
+                assignedEditor: {
+                  include: { role: true }
+                },
                 contentscript: {
                   select: {
                     pptFileData: true,
@@ -38,6 +53,7 @@ export async function GET() {
     let scripted = 0;
     let underReview = 0;
     let readyForVideo = 0;
+    let approved = 0;
 
     const topicsInProgress = [];
 
@@ -51,10 +67,12 @@ export async function GET() {
           if (topic.workflowStatus === "Editing") inEditing++;
           if (topic.workflowStatus === "Scripted") scripted++;
           if (topic.workflowStatus === "Under_Review") underReview++;
+          if (topic.workflowStatus === "Approved") approved++;
           if (topic.workflowStatus === "ReadyForVideoPrep" || topic.workflowStatus === "Post_Editing") readyForVideo++;
 
-          // Topics In Progress List (Everything except Published)
-          if (topic.workflowStatus !== "Published") {
+          // Topics In Progress List (Everything except Planned)
+          // We want to show Scripted, Editing, Post-Editing, Ready, Under Review, Approved, Published
+          if (topic.workflowStatus !== "Planned") {
             topicsInProgress.push({
               content_id: topic.id,
               topic_title: topic.title,
@@ -81,12 +99,11 @@ export async function GET() {
         "Post_Editing": "Ready_for_Video_Prep",
         "ReadyForVideoPrep": "Ready_for_Video_Prep",
         "Under_Review": "Under_Review",
+        "Approved": "Approved",
         "Published": "Published"
       };
       return map[status] || status;
     };
-
-    // 3. Format data
     const formattedTopics = topicsInProgress.map((topic) => ({
       content_id: topic.content_id,
       topic_title: topic.topic_title,
@@ -97,7 +114,9 @@ export async function GET() {
       program_name: topic.program_name,
       video_link: topic.video_link,
       review_notes: topic.review_notes,
-      assigned_editor_name: topic.assignedEditor ? `${topic.assignedEditor.firstName || ''} ${topic.assignedEditor.lastName || ''}`.trim() : null,
+      assigned_editor_name: (topic.assignedEditor && topic.assignedEditor.role && topic.assignedEditor.role.roleName === 'Editor')
+        ? `${topic.assignedEditor.firstName || ''} ${topic.assignedEditor.lastName || ''}`.trim()
+        : "Unassigned",
       has_ppt: topic.has_ppt,
       has_doc: topic.has_doc,
       has_zip: topic.has_zip,
@@ -111,8 +130,10 @@ export async function GET() {
         scripted,
         underReview,
         readyForVideo,
+        approved
       },
       topicsInProgress: formattedTopics,
+      canPublish // Return permission
     });
   } catch (error) {
     console.error("Error fetching editor dashboard data:", error);

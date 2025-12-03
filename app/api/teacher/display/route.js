@@ -17,24 +17,31 @@ export async function GET(req) {
     const schoolId = searchParams.get("schoolId");
 
     const cookieStore = await cookies();
-    let userId = searchParams.get("userId") || cookieStore.get("userId")?.value;
+    const userId = cookieStore.get("userId")?.value;
 
     // Validate userId
-    if (userId && isNaN(parseInt(userId))) {
-      console.warn(`Invalid userId received: ${userId}`);
-      userId = null;
+    if (!userId || isNaN(parseInt(userId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (courseId) {
-      const course = await prisma.course.findUnique({
-        where: { id: parseInt(courseId) },
+      // ✨ SECURITY FIX: Verify user is assigned to this course
+      const course = await prisma.course.findFirst({
+        where: {
+          id: parseInt(courseId),
+          assignments: {
+            some: { userId: parseInt(userId) }
+          }
+        },
         include: {
           program: {
             include: { school: true },
           },
           sections: {
+            orderBy: { id: 'asc' }, // Sort units by creation order
             include: {
               contents: {
+                orderBy: { id: 'asc' }, // Sort topics by creation order
                 include: {
                   contentscript: true,
                 },
@@ -46,10 +53,18 @@ export async function GET(req) {
       });
 
       if (!course) {
-        return NextResponse.json({ error: "Course not found" }, { status: 404 });
+        return NextResponse.json({ error: "Course not found or access denied" }, { status: 404 });
       }
 
+      // Fetch User Role
+      const user = await prisma.user.findUnique({
+        where: { id: parseInt(userId) },
+        include: { role: true }
+      });
+      const userRole = user?.role?.roleName || "Teacher";
+
       const courseData = {
+        userRole,
         course_id: course.id,
         name: course.title,
         course_code: course.courseCode,
@@ -84,10 +99,7 @@ export async function GET(req) {
       return NextResponse.json(courseData);
     }
 
-    if (!userId) {
-      return NextResponse.json({ courses: [] });
-    }
-
+    // List courses assigned to the user
     const courses = await prisma.course.findMany({
       where: {
         assignments: {

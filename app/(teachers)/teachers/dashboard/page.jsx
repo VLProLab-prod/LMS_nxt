@@ -34,6 +34,8 @@ const TeacherDash = () => {
     const [expandedTopic, setExpandedTopic] = useState(null);
     const [openReviewModal, setOpenReviewModal] = useState(false);
     const [currentTopic, setCurrentTopic] = useState(null);
+    const [userRole, setUserRole] = useState("Teacher");
+    const [canApprove, setCanApprove] = useState(false);
 
     // Workflow steps for progress bar
     const workflowSteps = [
@@ -43,6 +45,7 @@ const TeacherDash = () => {
         { id: 'Post-Editing', label: 'Post-Editing', color: '#f59e0b' },
         { id: 'Ready_for_Video_Prep', label: 'Ready for Video', color: '#10b981' },
         { id: 'Under_Review', label: 'Under Review', color: '#8b5cf6' },
+        { id: 'Approved', label: 'Approved', color: '#10b981' },
         { id: 'Published', label: 'Published', color: '#22c55e' }
     ];
 
@@ -79,6 +82,12 @@ const TeacherDash = () => {
             if (data.topicsForReview) {
                 setTopicsForReview(data.topicsForReview);
             }
+            if (data.userRole) {
+                setUserRole(data.userRole);
+            }
+            if (data.canApprove !== undefined) {
+                setCanApprove(data.canApprove);
+            }
             setError(null);
         } catch (err) {
             console.error("Error fetching dashboard:", err);
@@ -100,6 +109,9 @@ const TeacherDash = () => {
 
     // Handle approve topic
     const handleApproveTopic = async (topicId) => {
+        // Find the topic to get course_id
+        const topic = topicsForReview.find(t => t.content_id === topicId);
+
         try {
             const res = await fetch(`/api/topics/update-status`, {
                 method: "POST",
@@ -108,7 +120,7 @@ const TeacherDash = () => {
                 },
                 body: JSON.stringify({
                     topicId,
-                    newStatus: "Published"
+                    newStatus: "Approved"
                 }),
             });
 
@@ -116,10 +128,16 @@ const TeacherDash = () => {
                 throw new Error("Failed to approve topic");
             }
 
-            // Close modal and refresh data
+            // Close modal
             setOpenReviewModal(false);
             setCurrentTopic(null);
-            fetchDashboardData();
+
+            // Redirect to course page
+            if (topic && topic.course_id) {
+                router.push(`/teachers/courses/${topic.course_id}`);
+            } else {
+                fetchDashboardData();
+            }
 
         } catch (error) {
             console.error("Error approving topic:", error);
@@ -407,19 +425,26 @@ const TeacherDash = () => {
                                                             </IconButton>
                                                         </Tooltip>
 
-                                                        <Tooltip title="Approve & Publish">
-                                                            <Button
-                                                                variant="contained"
-                                                                startIcon={<CheckCircle />}
-                                                                onClick={() => handleOpenReviewModal(topic)}
-                                                                sx={{
-                                                                    backgroundColor: "#10b981",
-                                                                    "&:hover": { backgroundColor: "#059669" },
-                                                                    fontWeight: 600
-                                                                }}
-                                                            >
-                                                                Review & Approve
-                                                            </Button>
+                                                        <Tooltip title={canApprove ? "Approve & Publish" : "Only TAs can approve"}>
+                                                            <span>
+                                                                <Button
+                                                                    variant="contained"
+                                                                    startIcon={<CheckCircle />}
+                                                                    disabled={!canApprove}
+                                                                    onClick={() => {
+                                                                        if (window.confirm("Are you sure you want to approve this topic?")) {
+                                                                            handleApproveTopic(topic.content_id);
+                                                                        }
+                                                                    }}
+                                                                    sx={{
+                                                                        backgroundColor: canApprove ? "#10b981" : undefined,
+                                                                        "&:hover": { backgroundColor: canApprove ? "#059669" : undefined },
+                                                                        fontWeight: 600
+                                                                    }}
+                                                                >
+                                                                    Approve
+                                                                </Button>
+                                                            </span>
                                                         </Tooltip>
                                                     </Box>
                                                 </Box>
@@ -447,6 +472,7 @@ const TeacherDash = () => {
                         topic={currentTopic}
                         onFeedbackSubmit={handleFeedbackSubmit}
                         onApprove={handleApproveTopic}
+                        canApprove={canApprove}
                     />
                 </>
             )}

@@ -27,20 +27,28 @@ export default function EditorCourseDetail() {
     const params = useParams();
     const router = useRouter();
 
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const handleBack = () => {
         router.push('/editor/courses');
     };
 
     const fetchCourse = async () => {
         try {
+            setLoading(true);
             const res = await fetch(`/api/teacher/display?courseId=${params.id}`);
             if (!res.ok) {
                 throw new Error("Failed to fetch course data");
             }
             const data = await res.json();
             setCourse(data);
+            setError(null);
         } catch (error) {
             console.error("Error fetching course:", error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -65,7 +73,9 @@ export default function EditorCourseDetail() {
         }
     };
 
-    if (!course) return <p className="p-8">Loading...</p>;
+    if (loading) return <p className="p-8">Loading...</p>;
+    if (error) return <p className="p-8 text-red-500">Error: {error}</p>;
+    if (!course) return <p className="p-8">Course not found</p>;
 
     const getAllTopics = () => {
         return course.units ? course.units.flatMap((u) => u.topics || []) : [];

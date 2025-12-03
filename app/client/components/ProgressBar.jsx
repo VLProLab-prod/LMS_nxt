@@ -92,6 +92,7 @@ QontoStepIcon.propTypes = {
 const ProgressBar = ({ status }) => {
   const steps = [
     "planning",
+    "pending approval", // ✨ New Stage
     "editing",
     "review",
     "published",
@@ -102,17 +103,18 @@ const ProgressBar = ({ status }) => {
 
   if (statusLower === "planned") {
     activeStep = 0; // Planning
+  } else if (statusLower === "scripted") {
+    activeStep = 1; // Pending Approval
   } else if (
-    statusLower === "scripted" ||
     statusLower === "editing" ||
     statusLower === "post-editing" ||
     statusLower === "ready_for_video_prep"
   ) {
-    activeStep = 1; // Editing (covers Scripted -> Ready for Video)
+    activeStep = 2; // Editing
   } else if (statusLower === "under_review") {
-    activeStep = 2; // Review
+    activeStep = 3; // Review
   } else if (statusLower === "published") {
-    activeStep = 3; // Published
+    activeStep = 4; // Published
   } else {
     activeStep = 0; // Default
   }

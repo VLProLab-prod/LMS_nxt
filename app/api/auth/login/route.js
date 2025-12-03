@@ -75,14 +75,14 @@ export async function POST(req) {
     // Decide dashboard
     let redirect = "/login";
 
-    if (roleName === "teacher") redirect = "/teachers/dashboard";
+    if (roleName === "teacher" || roleName === "teacher assistant") redirect = "/teachers/dashboard";
     if (roleName === "admin") redirect = "/admin";
     if (roleName === "editor") redirect = "/editor/dashboard";
 
-    // If teacher, fetch only their assigned courses and include in response
+    // If teacher or TA, fetch only their assigned courses and include in response
     let assignedCourses = [];
     let assignedPrograms = [];
-    if (roleName === "teacher") {
+    if (roleName === "teacher" || roleName === "teacher assistant") {
       const courses = await prisma.course.findMany({
         where: {
           assignments: {

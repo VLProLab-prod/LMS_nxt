@@ -21,14 +21,21 @@ export async function POST(request) {
       workflowStatus: dbStatus,
     };
 
-    // If moving to Post-Editing (Start Recording), assign the current user
+    // If moving to Post-Editing (Start Recording), assign the current user IF they are an Editor
     if (newStatus === "Post-Editing") {
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
       const userId = cookieStore.get("userId")?.value;
 
       if (userId) {
-        updateData.assignedEditorId = parseInt(userId);
+        const user = await prisma.user.findUnique({
+          where: { id: parseInt(userId) },
+          include: { role: true }
+        });
+
+        if (user?.role?.roleName === "Editor") {
+          updateData.assignedEditorId = parseInt(userId);
+        }
       }
     }
 

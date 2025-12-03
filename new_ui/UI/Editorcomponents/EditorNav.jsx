@@ -9,6 +9,22 @@ import { useRouter } from "next/navigation";
 const EditorNav = () => {
   const [open, setOpen] = useState(false);
   const [active, setactive] = useState(false);
+  const [userName, setUserName] = useState("User");
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          setUserName(data.firstName || "User");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const toggleDrawer = (value) => {
     setOpen(value);
@@ -48,7 +64,7 @@ const EditorNav = () => {
                 className="w-20 h-20 rounded-full shadow-md"
                 src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.jixXH_Els1MXBRmKFdMQPAHaHa%3Fcb%3Ducfimg2%26pid%3DApi%26ucfimg%3D1&f=1&ipt=5f2c9482b3203216f66634e457db5adab9cbfcd1542e6d9ac338fae4e0abf505&ipo=images"
               />
-              <p className="py-2 text-2xl font-semibold">Hi Editor</p>
+              <p className="py-2 text-2xl font-semibold">Hi {userName}</p>
             </div>
 
             {/* Menu Buttons */}
@@ -57,7 +73,11 @@ const EditorNav = () => {
                 ? "bg-black text-white"
                 : "bg-white text-black hover:bg-gray-200"
                 }`}
-              onClick={() => { isactive(1); router.push(`/editor/dashboard`) }}
+              onClick={() => {
+                isactive(1);
+                router.push(`/editor/dashboard`);
+                toggleDrawer(false);
+              }}
             >
               Dashboard
             </button>
@@ -67,7 +87,11 @@ const EditorNav = () => {
                 ? "bg-black text-white"
                 : "bg-white text-black hover:bg-gray-200"
                 }`}
-              onClick={() => { router.push(`/editor/courses`); isactive(2); }}
+              onClick={() => {
+                isactive(2);
+                router.push(`/editor/courses`);
+                toggleDrawer(false);
+              }}
             >
               Courses
             </button>
@@ -77,7 +101,11 @@ const EditorNav = () => {
                 ? "bg-black text-white"
                 : "bg-white text-black hover:bg-gray-200"
                 }`}
-              onClick={() => { router.push(`/editor/programs`); isactive(3); }}
+              onClick={() => {
+                isactive(3);
+                router.push(`/editor/programs`);
+                toggleDrawer(false);
+              }}
             >
               Programs
             </button>

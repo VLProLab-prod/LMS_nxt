@@ -21,7 +21,7 @@ import {
   TextField,
   Tooltip
 } from "@mui/material";
-import { Edit, Visibility, ExpandMore, VideoCall, Upload, CheckCircle, Description, Slideshow, FolderZip, ReportProblem } from "@mui/icons-material";
+import { Edit, Visibility, ExpandMore, VideoCall, Upload, CheckCircle, Description, Slideshow, FolderZip, ReportProblem, Search } from "@mui/icons-material";
 
 const EditorDash = () => {
   const [stats, setStats] = useState({
@@ -30,7 +30,8 @@ const EditorDash = () => {
     inEditing: 0,
     scripted: 0,
     underReview: 0,
-    readyForVideo: 0
+    readyForVideo: 0,
+    approved: 0
   });
   const [topicsInProgress, setTopicsInProgress] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,8 @@ const EditorDash = () => {
   const [currentTopic, setCurrentTopic] = useState(null);
   const [videoLink, setVideoLink] = useState("");
   const [viewedFeedbackTopics, setViewedFeedbackTopics] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [canPublish, setCanPublish] = useState(false);
 
   // Workflow steps for progress bar
   const workflowSteps = [
@@ -49,6 +52,7 @@ const EditorDash = () => {
     { id: 'Post-Editing', label: 'Post-Editing', color: '#f59e0b' },
     { id: 'Ready_for_Video_Prep', label: 'Ready for Video', color: '#10b981' },
     { id: 'Under_Review', label: 'Under Review', color: '#8b5cf6' },
+    { id: 'Approved', label: 'Approved', color: '#10b981' },
     { id: 'Published', label: 'Published', color: '#22c55e' }
   ];
 
@@ -56,9 +60,10 @@ const EditorDash = () => {
 
 
 
-  // Filter topics to show those in "Editing", "Scripted", "Post-Editing", "Ready_for_Video_Prep", "Under_Review", or "Published" status
+  // Filter topics to show those in "Editing", "Scripted", "Post-Editing", "Ready_for_Video_Prep", "Under_Review", or "Approved" status
   const editingTopics = topicsInProgress.filter(topic =>
-    ['Scripted', 'Editing', 'Post-Editing', 'Ready_for_Video_Prep', 'Under_Review', 'Published'].includes(topic.workflow_status)
+    ['Scripted', 'Editing', 'Post-Editing', 'Ready_for_Video_Prep', 'Under_Review', 'Approved'].includes(topic.workflow_status) &&
+    (searchQuery === "" || (topic.assigned_editor_name && topic.assigned_editor_name.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   // Handle record button click
@@ -121,6 +126,32 @@ const EditorDash = () => {
     }
   };
 
+  // Handle publish topic
+  const handlePublish = async (topic) => {
+    if (!window.confirm("Are you sure you want to publish this topic?")) return;
+
+    try {
+      const res = await fetch(`/api/topics/update-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topicId: topic.content_id,
+          newStatus: 'Published'
+        }),
+      });
+
+      if (res.ok) {
+        fetchDashboardData();
+      } else {
+        alert("Failed to publish topic");
+      }
+    } catch (error) {
+      console.error('Error publishing topic:', error);
+    }
+  };
+
   // Calculate progress percentage based on workflow status
   const getWorkflowProgress = (status) => {
     const stepIndex = workflowSteps.findIndex(step => step.id === status);
@@ -150,6 +181,9 @@ const EditorDash = () => {
       }
       if (data.topicsInProgress) {
         setTopicsInProgress(data.topicsInProgress);
+      }
+      if (data.canPublish !== undefined) {
+        setCanPublish(data.canPublish);
       }
       setError(null);
     } catch (err) {
@@ -183,11 +217,12 @@ const EditorDash = () => {
             {[
               { label: "Total Topics", value: stats.totalTopics, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
               { label: "Published", value: stats.published, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
+              { label: "Approved", value: stats.approved, bg: "rgba(16,185,129,0.1)", color: "#047857", borderColor: "#10b981" },
               { label: "In Editing", value: stats.inEditing + (stats.scripted || 0), bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
               { label: "Under Review", value: stats.underReview, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7" },
               { label: "Ready for Video", value: stats.readyForVideo, bg: "rgba(6,182,212,0.1)", color: "#0e7490", borderColor: "#06b6d4" },
             ].map((item, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={2.4} key={index}>
+              <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
                 <Card
                   sx={{
                     p: 3,
@@ -240,17 +275,37 @@ const EditorDash = () => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 3
+              mb: 3,
+              gap: 2
             }}>
-              <Typography variant="h4" sx={{ fontWeight: 600, color: "#374151" }}>
-                Topics in Editing
-              </Typography>
-              <Chip
-                label={`${editingTopics.length} Active`}
-                sx={{
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: "#374151" }}>
+                  Topics in Editing
+                </Typography>
+                <Chip
+                  label={`${editingTopics.length} Active`}
+                  sx={{
+                    color: "black",
+                    fontWeight: 600
+                  }}
+                />
+              </Box>
 
-                  color: "black",
-                  fontWeight: 600
+              <TextField
+                size="small"
+                placeholder="Search by Editor Name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
+                }}
+                sx={{
+                  width: 300,
+                  backgroundColor: 'white',
+                  borderRadius: 1,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
                 }}
               />
             </Box>
@@ -491,34 +546,46 @@ const EditorDash = () => {
                                 title={
                                   (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted')
                                     ? "Start Recording"
-                                    : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video") : (topic.workflow_status === 'Published' ? "Complete Task" : "Edit Video Link"))
+                                    : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video")
+                                      : (topic.workflow_status === 'Approved' ? (canPublish ? "Publish Content" : "Waiting for Publisher")
+                                        : "Edit Video Link"))
                                 }
                               >
-                                <Button
-                                  variant="contained"
-                                  startIcon={
-                                    (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? <VideoCall /> : (topic.workflow_status === 'Published' ? <CheckCircle /> : <Upload />)
-                                  }
-                                  onClick={() => {
-                                    if (topic.workflow_status === 'Published') {
-                                      if (window.confirm("Mark this task as fully complete? This will remove it from your active list.")) {
-                                        alert("Great job! Task marked as complete.");
-                                        setTopicsInProgress(prev => prev.filter(t => t.content_id !== topic.content_id));
-                                      }
-                                    } else {
-                                      handleRecordClick(topic);
+                                <span>
+                                  <Button
+                                    variant="contained"
+                                    disabled={topic.workflow_status === 'Approved' && !canPublish}
+                                    startIcon={
+                                      (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? <VideoCall />
+                                        : (topic.workflow_status === 'Approved' ? <CheckCircle /> : <Upload />)
                                     }
-                                  }}
-                                  sx={{
-                                    backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#dc2626" : (topic.workflow_status === 'Published' ? "#10b981" : "#7c3aed"),
-                                    "&:hover": {
-                                      backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#b91c1c" : (topic.workflow_status === 'Published' ? "#059669" : "#6d28d9")
-                                    },
-                                    fontWeight: 600
-                                  }}
-                                >
-                                  {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Record" : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video") : (topic.workflow_status === 'Published' ? "Finish" : "Edit Video Link"))}
-                                </Button>
+                                    onClick={() => {
+                                      if (topic.workflow_status === 'Approved') {
+                                        handlePublish(topic);
+                                      } else {
+                                        handleRecordClick(topic);
+                                      }
+                                    }}
+                                    sx={{
+                                      backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#dc2626"
+                                        : (topic.workflow_status === 'Approved' && canPublish ? "#10b981" : "#7c3aed"),
+                                      "&:hover": {
+                                        backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#b91c1c"
+                                          : (topic.workflow_status === 'Approved' && canPublish ? "#059669" : "#6d28d9")
+                                      },
+                                      fontWeight: 600,
+                                      "&.Mui-disabled": {
+                                        backgroundColor: "#e5e7eb",
+                                        color: "#9ca3af"
+                                      }
+                                    }}
+                                  >
+                                    {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Record"
+                                      : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video")
+                                        : (topic.workflow_status === 'Approved' ? "Publish"
+                                          : "Edit Video Link"))}
+                                  </Button>
+                                </span>
                               </Tooltip>
                             )}
                           </Box>

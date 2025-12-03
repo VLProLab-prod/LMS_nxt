@@ -3,9 +3,13 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+import { cookies } from "next/headers";
+
 export async function POST(req) {
     try {
         const { topicId, videoLink, newStatus } = await req.json();
+        const cookieStore = await cookies();
+        const userId = cookieStore.get("userId")?.value;
 
         if (!topicId || !videoLink) {
             return NextResponse.json(
@@ -36,6 +40,7 @@ export async function POST(req) {
             data: {
                 videoLink: videoLink,
                 workflowStatus: dbStatus || "Under_Review",
+                ...(userId && { assignedEditorId: parseInt(userId) }) // ✨ Assign current user
             },
         });
 
