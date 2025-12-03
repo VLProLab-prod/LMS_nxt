@@ -13,9 +13,7 @@ import {
 
 const Createunitmodal = ({ open, onClose, courseId }) => {
   const [data, setData] = useState({
-    unitname: "",
-    unitcode: "",
-    profname: ""
+    unitname: ""
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,10 +35,6 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
       const formData = new FormData();
       formData.append("course_id", courseId);
       formData.append("unit_title", data.unitname);
-      formData.append("unit_code", data.unitcode);
-      formData.append("prof_name", data.profname);
-      if (data.ppt) formData.append("ppt", data.ppt);
-      if (data.materials) formData.append("materials", data.materials);
 
       const res = await fetch("/api/teacher/create-unit", {
         method: "POST",
@@ -54,8 +48,8 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
 
       // Success - close modal and reset form
       onClose();
-      setData({ unitname: "", unitcode: "", profname: "" });
-      
+      setData({ unitname: "" });
+
       // Refresh the page to show new unit
       window.location.reload();
 
@@ -68,7 +62,7 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
   };
 
   const handleClose = () => {
-    setData({ unitname: "", unitcode: "", profname: "" });
+    setData({ unitname: "" });
     setError("");
     onClose();
   };
@@ -100,55 +94,6 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
               disabled={loading}
               fullWidth
             />
-
-            <TextField
-              required
-              label="Unit Code"
-              name="unitcode"
-              value={data.unitcode}
-              onChange={formhandler}
-              placeholder="e.g., UNIT-01"
-              disabled={loading}
-              fullWidth
-            />
-
-            <TextField
-              required
-              label="Professor Name"
-              name="profname"
-              value={data.profname}
-              onChange={formhandler}
-              placeholder="e.g., Dr. John Smith"
-              disabled={loading}
-              fullWidth
-            />
-
-            <Box>
-              <Typography variant="caption" display="block" gutterBottom>
-                Upload PPT (Optional)
-              </Typography>
-              <input
-                type="file"
-                name="ppt"
-                accept=".ppt,.pptx"
-                onChange={(e) => setData((prev) => ({ ...prev, ppt: e.target.files[0] }))}
-                disabled={loading}
-                style={{ width: '100%' }}
-              />
-            </Box>
-
-            <Box>
-              <Typography variant="caption" display="block" gutterBottom>
-                Upload Materials (Optional)
-              </Typography>
-              <input
-                type="file"
-                name="materials"
-                onChange={(e) => setData((prev) => ({ ...prev, materials: e.target.files[0] }))}
-                disabled={loading}
-                style={{ width: '100%' }}
-              />
-            </Box>
           </Box>
         </DialogContent>
 
@@ -156,9 +101,9 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
           <Button onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={loading}
           >
             {loading ? "Creating..." : "Create Unit"}

@@ -21,7 +21,7 @@ import {
   TextField,
   Tooltip
 } from "@mui/material";
-import { Edit, Visibility, ExpandMore, VideoCall, Upload, CheckCircle } from "@mui/icons-material";
+import { Edit, Visibility, ExpandMore, VideoCall, Upload, CheckCircle, Description, Slideshow, FolderZip, ReportProblem } from "@mui/icons-material";
 
 const EditorDash = () => {
   const [stats, setStats] = useState({
@@ -39,6 +39,7 @@ const EditorDash = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [currentTopic, setCurrentTopic] = useState(null);
   const [videoLink, setVideoLink] = useState("");
+  const [viewedFeedbackTopics, setViewedFeedbackTopics] = useState([]);
 
   // Workflow steps for progress bar
   const workflowSteps = [
@@ -50,6 +51,10 @@ const EditorDash = () => {
     { id: 'Under_Review', label: 'Under Review', color: '#8b5cf6' },
     { id: 'Published', label: 'Published', color: '#22c55e' }
   ];
+
+  // ... (rest of the file)
+
+
 
   // Filter topics to show those in "Editing", "Scripted", "Post-Editing", "Ready_for_Video_Prep", "Under_Review", or "Published" status
   const editingTopics = topicsInProgress.filter(topic =>
@@ -267,8 +272,9 @@ const EditorDash = () => {
                         setExpandedTopic(expandedTopic === topic.content_id ? null : topic.content_id)
                       }
                       sx={{
-                        border: `2px solid ${getStatusColor(topic.workflow_status)}`,
+                        border: topic.review_notes ? `2px solid #ef4444` : `2px solid ${getStatusColor(topic.workflow_status)}`,
                         borderRadius: "12px !important",
+                        backgroundColor: topic.review_notes ? '#fef2f2' : 'transparent',
                         "&:before": { display: "none" },
                         "&.Mui-expanded": { margin: "0 0 16px 0" }
                       }}
@@ -295,6 +301,18 @@ const EditorDash = () => {
                             <Typography variant="h6" sx={{ fontWeight: 600 }}>
                               {topic.topic_title}
                             </Typography>
+                            {topic.assigned_editor_name && (
+                              <Chip
+                                label={`Editor: ${topic.assigned_editor_name}`}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  borderColor: "#8b5cf6",
+                                  color: "#8b5cf6",
+                                  fontWeight: 500
+                                }}
+                              />
+                            )}
                             <Chip
                               label={topic.workflow_status.replace('_', ' ')}
                               size="small"
@@ -383,6 +401,7 @@ const EditorDash = () => {
                           </Grid>
 
                           {/* Action Buttons */}
+                          {/* Action Buttons */}
                           <Box sx={{
                             display: "flex",
                             justifyContent: "flex-end",
@@ -390,82 +409,115 @@ const EditorDash = () => {
                             pt: 3,
                             borderTop: "1px solid #e5e7eb"
                           }}>
-                            <Tooltip title="Edit Topic">
-                              <IconButton
-                                size="medium"
-                                sx={{
-                                  backgroundColor: "#3b82f6",
-                                  color: "white",
-                                  "&:hover": { backgroundColor: "#2563eb" }
-                                }}
-                                onClick={() => console.log('Edit topic:', topic.content_id)}
-                              >
-                                <Edit />
-                              </IconButton>
-                            </Tooltip>
+                            {/* Download Buttons */}
+                            <Box sx={{ display: 'flex', gap: 1, mr: 'auto' }}>
+                              {topic.has_doc && (
+                                <Tooltip title="Download Script (DOC)">
+                                  <IconButton
+                                    size="medium"
+                                    sx={{
+                                      backgroundColor: "#2563eb",
+                                      color: "white",
+                                      "&:hover": { backgroundColor: "#1d4ed8" }
+                                    }}
+                                    onClick={() => window.open(`/api/download-topic-material?topicId=${topic.content_id}&type=doc`, '_blank')}
+                                  >
+                                    <Description />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
 
-                            <Tooltip title="View Topic Details">
-                              <IconButton
-                                size="medium"
-                                sx={{
-                                  backgroundColor: "#10b981",
-                                  color: "white",
-                                  "&:hover": { backgroundColor: "#059669" }
-                                }}
-                                onClick={() => console.log('View topic:', topic.content_id)}
-                              >
-                                <Visibility />
-                              </IconButton>
-                            </Tooltip>
+                              {topic.has_ppt && (
+                                <Tooltip title="Download Slides (PPT)">
+                                  <IconButton
+                                    size="medium"
+                                    sx={{
+                                      backgroundColor: "#ea580c",
+                                      color: "white",
+                                      "&:hover": { backgroundColor: "#c2410c" }
+                                    }}
+                                    onClick={() => window.open(`/api/download-topic-material?topicId=${topic.content_id}&type=ppt`, '_blank')}
+                                  >
+                                    <Slideshow />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
 
-                            <Tooltip
-                              title={
-                                (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted')
-                                  ? "Start Recording"
-                                  : (topic.workflow_status === 'Post-Editing' ? "Upload Video" : (topic.workflow_status === 'Published' ? "Complete Task" : "Edit Video Link"))
-                              }
-                            >
-                              <Button
-                                variant="contained"
-                                startIcon={
-                                  (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? <VideoCall /> : (topic.workflow_status === 'Published' ? <CheckCircle /> : <Upload />)
-                                }
-                                onClick={() => {
-                                  if (topic.workflow_status === 'Published') {
-                                    if (window.confirm("Mark this task as fully complete? This will remove it from your active list.")) {
-                                      // Here we would ideally update status to 'Completed', but since we can't change schema,
-                                      // we'll just filter it out locally or refresh to show it's done. 
-                                      // For now, let's just alert.
-                                      alert("Great job! Task marked as complete.");
-                                      // Optionally, we could trigger a refresh or local state update to hide it.
-                                      setTopicsInProgress(prev => prev.filter(t => t.content_id !== topic.content_id));
-                                    }
-                                  } else {
-                                    handleRecordClick(topic);
-                                  }
-                                }}
-                                sx={{
-                                  backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#dc2626" : (topic.workflow_status === 'Published' ? "#10b981" : "#7c3aed"),
-                                  "&:hover": {
-                                    backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#b91c1c" : (topic.workflow_status === 'Published' ? "#059669" : "#6d28d9")
-                                  },
-                                  fontWeight: 600
-                                }}
-                              >
-                                {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Record" : (topic.workflow_status === 'Post-Editing' ? "Upload Video" : (topic.workflow_status === 'Published' ? "Finish" : "Edit Video Link"))}
-                              </Button>
-                            </Tooltip>
+                              {topic.has_zip && (
+                                <Tooltip title="Download Materials (ZIP)">
+                                  <IconButton
+                                    size="medium"
+                                    sx={{
+                                      backgroundColor: "#7c3aed",
+                                      color: "white",
+                                      "&:hover": { backgroundColor: "#6d28d9" }
+                                    }}
+                                    onClick={() => window.open(`/api/download-topic-material?topicId=${topic.content_id}&type=zip`, '_blank')}
+                                  >
+                                    <FolderZip />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </Box>
 
                             {/* Feedback Button - Only show if review notes exist */}
                             {topic.review_notes && (
                               <Tooltip title="View Teacher Feedback">
                                 <Button
-                                  variant="outlined"
+                                  variant="contained"
                                   startIcon={<Visibility />}
-                                  onClick={() => alert(`Feedback: ${topic.review_notes}`)} // Replace with a proper modal if needed
-                                  sx={{ borderColor: '#f59e0b', color: '#f59e0b' }}
+                                  onClick={() => {
+                                    alert(`Feedback: ${topic.review_notes}`);
+                                    if (!viewedFeedbackTopics.includes(topic.content_id)) {
+                                      setViewedFeedbackTopics([...viewedFeedbackTopics, topic.content_id]);
+                                    }
+                                  }}
+                                  sx={{
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    "&:hover": { backgroundColor: "#dc2626" },
+                                    fontWeight: 600,
+                                    animation: "pulse 2s infinite"
+                                  }}
                                 >
-                                  Feedback
+                                  View Feedback
+                                </Button>
+                              </Tooltip>
+                            )}
+
+                            {/* Main Action Button */}
+                            {(!topic.review_notes || viewedFeedbackTopics.includes(topic.content_id)) && (
+                              <Tooltip
+                                title={
+                                  (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted')
+                                    ? "Start Recording"
+                                    : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video") : (topic.workflow_status === 'Published' ? "Complete Task" : "Edit Video Link"))
+                                }
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={
+                                    (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? <VideoCall /> : (topic.workflow_status === 'Published' ? <CheckCircle /> : <Upload />)
+                                  }
+                                  onClick={() => {
+                                    if (topic.workflow_status === 'Published') {
+                                      if (window.confirm("Mark this task as fully complete? This will remove it from your active list.")) {
+                                        alert("Great job! Task marked as complete.");
+                                        setTopicsInProgress(prev => prev.filter(t => t.content_id !== topic.content_id));
+                                      }
+                                    } else {
+                                      handleRecordClick(topic);
+                                    }
+                                  }}
+                                  sx={{
+                                    backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#dc2626" : (topic.workflow_status === 'Published' ? "#10b981" : "#7c3aed"),
+                                    "&:hover": {
+                                      backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#b91c1c" : (topic.workflow_status === 'Published' ? "#059669" : "#6d28d9")
+                                    },
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Record" : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video") : (topic.workflow_status === 'Published' ? "Finish" : "Edit Video Link"))}
                                 </Button>
                               </Tooltip>
                             )}

@@ -17,13 +17,26 @@ export async function POST(request) {
     if (newStatus === "Ready_for_Video_Prep") dbStatus = "ReadyForVideoPrep";
     if (newStatus === "Under_Review") dbStatus = "Under_Review";
 
+    const updateData = {
+      workflowStatus: dbStatus,
+    };
+
+    // If moving to Post-Editing (Start Recording), assign the current user
+    if (newStatus === "Post-Editing") {
+      const { cookies } = await import("next/headers");
+      const cookieStore = await cookies();
+      const userId = cookieStore.get("userId")?.value;
+
+      if (userId) {
+        updateData.assignedEditorId = parseInt(userId);
+      }
+    }
+
     const updatedTopic = await prisma.contentItem.update({
       where: {
         id: parseInt(topicId),
       },
-      data: {
-        workflowStatus: dbStatus,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(updatedTopic);

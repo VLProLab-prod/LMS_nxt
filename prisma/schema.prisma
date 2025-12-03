@@ -80,6 +80,7 @@ model User {
   // relations
   uploadedMaterials UnitMaterial[] @relation("uploadedMaterials")
   uploadedContentByEditor ContentItem[] @relation("uploadedByEditor")
+  assignedContent ContentItem[] @relation("assignedEditor")
   assignedCourses UserCourseAssignment[]
 
   @@map("users")
@@ -146,12 +147,14 @@ model ContentItem {
   videoLink             String? @map("video_link")
   reviewNotes           String? @map("review_notes")
   uploadedByEditorId    Int?    @map("uploaded_by_editor_id")
+  assignedEditorId      Int?    @map("assigned_editor_id")
   practiceQuestionsUrl  String? @map("practice_questions_url")
   referenceMaterialUrl  String? @map("reference_material_url")
 
   section CourseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   contentscript Contentscript?
   uploadedByEditor User? @relation("uploadedByEditor", fields: [uploadedByEditorId], references: [id])
+  assignedEditor User? @relation("assignedEditor", fields: [assignedEditorId], references: [id])
 
   @@unique([sectionId, title])
   @@map("contentitems")

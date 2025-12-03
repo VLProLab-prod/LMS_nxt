@@ -5,36 +5,74 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // 1. Fetch counts
-    const totalTopics = await prisma.contentItem.count();
-    const published = await prisma.contentItem.count({ where: { workflowStatus: "Published" } });
-    const inEditing = await prisma.contentItem.count({ where: { workflowStatus: "Editing" } });
-    const scripted = await prisma.contentItem.count({ where: { workflowStatus: "Scripted" } });
-    const underReview = await prisma.contentItem.count({
+    // 1. Fetch Active courses (same as course list)
+    const courses = await prisma.course.findMany({
       where: {
-        workflowStatus: { in: ["Under_Review", "Post_Editing"] }
-      }
-    });
-    const readyForVideo = await prisma.contentItem.count({ where: { workflowStatus: "ReadyForVideoPrep" } });
-
-    // 2. Fetch topics in progress (not Published)
-    const topicsInProgress = await prisma.contentItem.findMany({
-      where: {
-        workflowStatus: {
-          not: "Published"
-        }
+        status: "Active"
       },
       include: {
-        section: {
+        sections: {
           include: {
-            course: {
+            contents: {
               include: {
-                program: true,
-              },
-            },
-          },
+                assignedEditor: true,
+                contentscript: {
+                  select: {
+                    pptFileData: true,
+                    docFileData: true,
+                    zipFileData: true
+                  }
+                }
+              }
+            }
+          }
         },
-      },
+        program: true
+      }
+    });
+
+    // 2. Calculate stats from fetched courses
+    let totalTopics = 0;
+    let published = 0;
+    let inEditing = 0;
+    let scripted = 0;
+    let underReview = 0;
+    let readyForVideo = 0;
+
+    const topicsInProgress = [];
+
+    courses.forEach(course => {
+      course.sections.forEach(section => {
+        totalTopics += section.contents.length;
+
+        section.contents.forEach(topic => {
+          // Stats Counting
+          if (topic.workflowStatus === "Published") published++;
+          if (topic.workflowStatus === "Editing") inEditing++;
+          if (topic.workflowStatus === "Scripted") scripted++;
+          if (topic.workflowStatus === "Under_Review") underReview++;
+          if (topic.workflowStatus === "ReadyForVideoPrep" || topic.workflowStatus === "Post_Editing") readyForVideo++;
+
+          // Topics In Progress List (Everything except Published)
+          if (topic.workflowStatus !== "Published") {
+            topicsInProgress.push({
+              content_id: topic.id,
+              topic_title: topic.title,
+              workflow_status: topic.workflowStatus, // Will be mapped below
+              estimated_duration_min: topic.estimatedDurationMin,
+              course_title: course.title,
+              unit_title: section.title,
+              program_name: course.program?.programName || "Unknown Program",
+              video_link: topic.videoLink,
+              review_notes: topic.reviewNotes,
+              assignedEditor: topic.assignedEditor,
+              has_ppt: !!topic.contentscript?.pptFileData,
+              has_doc: !!topic.contentscript?.docFileData,
+              has_zip: !!topic.contentscript?.zipFileData,
+            });
+          }
+        });
+      });
     });
 
     // Helper to map DB status to Frontend status
@@ -50,15 +88,19 @@ export async function GET() {
 
     // 3. Format data
     const formattedTopics = topicsInProgress.map((topic) => ({
-      content_id: topic.id,
-      topic_title: topic.title,
-      workflow_status: mapStatus(topic.workflowStatus),
-      estimated_duration_min: topic.estimatedDurationMin,
-      course_title: topic.section?.course?.title || "Unknown Course",
-      unit_title: topic.section?.title || "Unknown Unit",
-      program_name: topic.section?.course?.program?.programName || "Unknown Program",
-      video_link: topic.videoLink,
-      review_notes: topic.reviewNotes,
+      content_id: topic.content_id,
+      topic_title: topic.topic_title,
+      workflow_status: mapStatus(topic.workflow_status),
+      estimated_duration_min: topic.estimated_duration_min,
+      course_title: topic.course_title,
+      unit_title: topic.unit_title,
+      program_name: topic.program_name,
+      video_link: topic.video_link,
+      review_notes: topic.review_notes,
+      assigned_editor_name: topic.assignedEditor ? `${topic.assignedEditor.firstName || ''} ${topic.assignedEditor.lastName || ''}`.trim() : null,
+      has_ppt: topic.has_ppt,
+      has_doc: topic.has_doc,
+      has_zip: topic.has_zip,
     }));
 
     return NextResponse.json({

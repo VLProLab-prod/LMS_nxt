@@ -47,7 +47,7 @@ export async function GET(req) {
         // Sanitize filename to remove invalid characters
         const sanitize = (str) => str.replace(/[^a-zA-Z0-9 \-_]/g, "").trim();
 
-        const filenameBase = `U${unitNumber}V${topicNumber} - ${sanitize(topicName)} - ${sanitize(profName)}`;
+        const filenameBase = `U_${String(unitNumber).padStart(2, '0')}V_${String(topicNumber).padStart(2, '0')} - ${sanitize(topicName)} - ${sanitize(profName)}`;
 
         let fileData = null;
         let filename = `${filenameBase}.${type}`;

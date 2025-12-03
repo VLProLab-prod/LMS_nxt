@@ -8,6 +8,9 @@ export const runtime = "nodejs";
 export async function GET() {
     try {
         const courses = await prisma.course.findMany({
+            where: {
+                status: "Active"
+            },
             include: {
                 program: {
                     include: { school: true },
