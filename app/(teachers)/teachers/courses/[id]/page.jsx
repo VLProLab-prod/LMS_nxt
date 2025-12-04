@@ -17,7 +17,8 @@ import {
   Chip,
   Paper,
 } from "@mui/material";
-import { Trash, FileCheck, CheckCircle, PlayCircle, MessageSquare, Send } from "lucide-react";
+import { Menu, MenuItem } from "@mui/material";
+import { Trash, FileCheck, CheckCircle, PlayCircle, MessageSquare, Send, Download } from "lucide-react";
 import ProgressBar from "../../../../client/components/ProgressBar";
 import Createunitmodal from "../../../../client/components/Createunitmodal";
 import CreateTopicmodal from "../../../../client/components/CreateTopicmodal";
@@ -37,6 +38,27 @@ export default function CourseStructureDesign() {
 
   const [currentUnitId, setCurrentUnitId] = useState(null);
   const [currentTopic, setCurrentTopic] = useState(null);
+
+  // Download Menu State
+  const [downloadAnchorEl, setDownloadAnchorEl] = useState(null);
+  const [activeDownloadTopic, setActiveDownloadTopic] = useState(null);
+
+  const handleDownloadMenuOpen = (event, topic) => {
+    setDownloadAnchorEl(event.currentTarget);
+    setActiveDownloadTopic(topic);
+  };
+
+  const handleDownloadMenuClose = () => {
+    setDownloadAnchorEl(null);
+    setActiveDownloadTopic(null);
+  };
+
+  const downloadFile = (type) => {
+    if (!activeDownloadTopic) return;
+    const url = `/api/download/script?topicId=${activeDownloadTopic.content_id}&type=${type}`;
+    window.open(url, '_blank');
+    handleDownloadMenuClose();
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -351,6 +373,16 @@ export default function CourseStructureDesign() {
                                     </span>
                                   </Tooltip>
 
+                                  {/* Download Button */}
+                                  <Tooltip title="Download Files">
+                                    <IconButton
+                                      size="small"
+                                      onClick={(e) => handleDownloadMenuOpen(e, topic)}
+                                    >
+                                      <Download />
+                                    </IconButton>
+                                  </Tooltip>
+
                                   {canApprove && ( // ✨ Conditional Render
                                     <Tooltip
                                       title={
@@ -449,6 +481,17 @@ export default function CourseStructureDesign() {
         topic={currentTopic}
         onUploadSuccess={fetchCourse}
       />
+
+      {/* Download Menu */}
+      <Menu
+        anchorEl={downloadAnchorEl}
+        open={Boolean(downloadAnchorEl)}
+        onClose={handleDownloadMenuClose}
+      >
+        <MenuItem onClick={() => downloadFile('ppt')}>Download PPT</MenuItem>
+        <MenuItem onClick={() => downloadFile('doc')}>Download Doc/PDF</MenuItem>
+        <MenuItem onClick={() => downloadFile('zip')}>Download Zip/Other</MenuItem>
+      </Menu>
 
       <ReviewDialogue
         open={openReviewModal}

@@ -3,6 +3,16 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
+  Trash,
+  FileCheck,
+  CheckCircle,
+  Video,
+  Edit,
+  Upload,
+  CheckSquare,
+  Download
+} from "lucide-react";
+import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -21,17 +31,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField
+  TextField,
+  Menu,
+  MenuItem
 } from "@mui/material";
-import {
-  Trash,
-  FileCheck,
-  CheckCircle,
-  Video,
-  Edit,
-  Upload,
-  CheckSquare
-} from "lucide-react";
 import VideoUploadModal from "../../../../client/Editorcomponents/UploadModal";
 import ProgressBar from "../../../../client/components/ProgressBar";
 import Createunitmodal from "../../../../client/components/Createunitmodal";
@@ -52,6 +55,27 @@ export default function CourseStructureDesign() {
 
   const [currentUnitId, setCurrentUnitId] = useState(null);
   const [currentTopic, setCurrentTopic] = useState(null);
+
+  // Download Menu State
+  const [downloadAnchorEl, setDownloadAnchorEl] = useState(null);
+  const [activeDownloadTopic, setActiveDownloadTopic] = useState(null);
+
+  const handleDownloadMenuOpen = (event, topic) => {
+    setDownloadAnchorEl(event.currentTarget);
+    setActiveDownloadTopic(topic);
+  };
+
+  const handleDownloadMenuClose = () => {
+    setDownloadAnchorEl(null);
+    setActiveDownloadTopic(null);
+  };
+
+  const downloadFile = (type) => {
+    if (!activeDownloadTopic) return;
+    const url = `/api/download/script?topicId=${activeDownloadTopic.content_id}&type=${type}`;
+    window.open(url, '_blank');
+    handleDownloadMenuClose();
+  };
 
   // Workflow phases mapping
   const workflowPhases = [
@@ -384,6 +408,21 @@ export default function CourseStructureDesign() {
                                       </span>
                                     </Tooltip>
 
+                                    {/* Download Button */}
+                                    <Tooltip title="Download Files">
+                                      <Button
+                                        onClick={(e) => handleDownloadMenuOpen(e, topic)}
+                                        sx={{
+                                          minWidth: "40px",
+                                          "&:hover": {
+                                            backgroundColor: "rgba(0, 0, 0, 0.04)"
+                                          }
+                                        }}
+                                      >
+                                        <Download size={16} />
+                                      </Button>
+                                    </Tooltip>
+
                                     {/* Finalize Button */}
                                     <Tooltip title={isFinalizeEnabled ? "Finalize Topic" : "Wait for teacher approval"}>
                                       <span>
@@ -481,6 +520,17 @@ export default function CourseStructureDesign() {
         topic={currentTopic}
         onUploadComplete={() => handleUploadComplete(currentTopic?.content_id)}
       />
+
+      {/* Download Menu */}
+      <Menu
+        anchorEl={downloadAnchorEl}
+        open={Boolean(downloadAnchorEl)}
+        onClose={handleDownloadMenuClose}
+      >
+        <MenuItem onClick={() => downloadFile('ppt')}>Download PPT</MenuItem>
+        <MenuItem onClick={() => downloadFile('doc')}>Download Doc/PDF</MenuItem>
+        <MenuItem onClick={() => downloadFile('zip')}>Download Zip/Other</MenuItem>
+      </Menu>
     </div>
   );
 }
