@@ -97,7 +97,7 @@ export async function GET(req) {
             },
             topicsForReview,
             userRole,
-            canApprove: user?.role?.canApproveContent || ["teacher assistant", "teaching assistant", "publisher"].includes(userRole?.toLowerCase()) || false
+            canApprove: ["teacher assistant", "teaching assistant", "publisher"].includes(userRole?.toLowerCase())
         });
 
     } catch (error) {

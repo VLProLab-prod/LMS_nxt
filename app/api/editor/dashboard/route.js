@@ -15,7 +15,7 @@ export async function GET() {
         where: { id: parseInt(userId) },
         include: { role: true }
       });
-      canPublish = user?.role?.canPublishContent || false;
+      canPublish = ["publisher"].includes(user?.role?.roleName?.toLowerCase()) || user?.role?.canPublishContent || false;
     }
 
     // 1. Fetch Active courses (same as course list)
@@ -72,7 +72,7 @@ export async function GET() {
 
           // Topics In Progress List (Everything except Planned)
           // We want to show Scripted, Editing, Post-Editing, Ready, Under Review, Approved, Published
-          if (topic.workflowStatus !== "Planned") {
+          if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Published") {
             topicsInProgress.push({
               content_id: topic.id,
               topic_title: topic.title,
@@ -95,16 +95,7 @@ export async function GET() {
     });
 
     // Helper to map DB status to Frontend status
-    const mapStatus = (status) => {
-      const map = {
-        "Post_Editing": "Ready_for_Video_Prep",
-        "ReadyForVideoPrep": "Ready_for_Video_Prep",
-        "Under_Review": "Under_Review",
-        "Approved": "Approved",
-        "Published": "Published"
-      };
-      return map[status] || status;
-    };
+    const mapStatus = (status) => status;
     const formattedTopics = topicsInProgress.map((topic) => ({
       content_id: topic.content_id,
       topic_title: topic.topic_title,

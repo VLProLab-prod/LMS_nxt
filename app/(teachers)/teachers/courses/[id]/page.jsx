@@ -199,7 +199,7 @@ export default function CourseStructureDesign() {
 
   const userRole = course.userRole;
   // Robust check for TA/Teacher role to enable features
-  const canApprove = ['Teacher', 'Teaching Assistant', 'Teacher Assistant', 'teacher', 'teaching assistant'].includes(userRole);
+  const canApprove = ['teaching assistant', 'teacher assistant', 'publisher'].includes(userRole?.toLowerCase());
   const canOverwrite = canApprove;
 
   return (

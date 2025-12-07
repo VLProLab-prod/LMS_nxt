@@ -51,8 +51,8 @@ const EditorDash = () => {
     { id: 'Planned', label: 'Planned', color: '#64748b' },
     { id: 'Scripted', label: 'Scripted', color: '#3b82f6' },
     { id: 'Editing', label: 'Editing', color: '#f59e0b' },
-    { id: 'Post-Editing', label: 'Post-Editing', color: '#f59e0b' },
-    { id: 'Ready_for_Video_Prep', label: 'Ready for Video', color: '#10b981' },
+    { id: 'Post_Editing', label: 'Post-Editing', color: '#f59e0b' },
+    { id: 'ReadyForVideoPrep', label: 'Ready for Video', color: '#10b981' },
     { id: 'Under_Review', label: 'Under Review', color: '#8b5cf6' },
     { id: 'Approved', label: 'Approved', color: '#059669' },
     { id: 'Published', label: 'Published', color: '#22c55e' }
@@ -70,7 +70,7 @@ const EditorDash = () => {
           },
           body: JSON.stringify({
             topicId: topic.content_id,
-            newStatus: 'Post-Editing'
+            newStatus: 'Post_Editing'
           }),
         });
 
@@ -80,7 +80,7 @@ const EditorDash = () => {
       } catch (error) {
         console.error('Error updating status:', error);
       }
-    } else if (['Post-Editing', 'Ready_for_Video_Prep', 'Under_Review'].includes(topic.workflow_status)) {
+    } else if (['Post_Editing', 'ReadyForVideoPrep', 'Under_Review'].includes(topic.workflow_status)) {
       // Show upload modal for initial upload OR editing existing link
       setCurrentTopic(topic);
       setVideoLink(topic.video_link || "");
@@ -519,7 +519,7 @@ const EditorDash = () => {
                             </Box>
 
                             {/* Feedback Button - Only show if review notes exist */}
-                            {topic.review_notes && (
+                            {topic.review_notes && topic.workflow_status !== 'Approved' && (
                               <Tooltip title="View Teacher Feedback">
                                 <Button
                                   variant="contained"
@@ -544,12 +544,12 @@ const EditorDash = () => {
                             )}
 
                             {/* Main Action Button */}
-                            {(!topic.review_notes || viewedFeedbackTopics.includes(topic.content_id)) && (
+                            {((!topic.review_notes || viewedFeedbackTopics.includes(topic.content_id)) || topic.workflow_status === 'Approved') && (
                               <Tooltip
                                 title={
                                   (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted')
                                     ? "Start Recording"
-                                    : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video")
+                                    : (topic.workflow_status === 'Post_Editing' || topic.workflow_status === 'ReadyForVideoPrep' ? (topic.review_notes ? "Re-upload Video" : "Upload Video")
                                       : (topic.workflow_status === 'Approved' ? (canPublish ? "Publish Content" : "Waiting for Publisher")
                                         : "Edit Video Link"))
                                 }
@@ -584,7 +584,7 @@ const EditorDash = () => {
                                     }}
                                   >
                                     {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Record"
-                                      : (topic.workflow_status === 'Post-Editing' ? (topic.review_notes ? "Re-upload Video" : "Upload Video")
+                                      : (topic.workflow_status === 'Post_Editing' || topic.workflow_status === 'ReadyForVideoPrep' ? (topic.review_notes ? "Re-upload Video" : "Upload Video")
                                         : (topic.workflow_status === 'Approved' ? "Publish"
                                           : "Edit Video Link"))}
                                   </Button>

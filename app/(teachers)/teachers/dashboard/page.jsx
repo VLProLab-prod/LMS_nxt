@@ -21,34 +21,62 @@ import { Edit, Visibility, ExpandMore, PlayCircle, CheckCircle } from "@mui/icon
 import ReviewDialogue from "../../../client/components/ReviewDialogue";
 
 // HemisphereProgress component
-const HemisphereProgress = ({ value, color = "#3b82f6" }) => {
-    const radius = 50;
-    const circumference = Math.PI * radius; // half circle
-    const offset = circumference - (value / 100) * circumference;
+// HemisphereProgress component
+const HemisphereProgress = ({ value, color = "#3b82f6", displayValue }) => {
+    const radius = 45;
+    const stroke = 10;
+    const normalizedRadius = radius - stroke * 0.5;
+    const circumference = Math.PI * normalizedRadius;
+    const strokeDashoffset = circumference - (value / 100) * circumference;
+
+    // Viewport dimensions
+    const width = 140;
+    const height = 75;
+    const centerX = width / 2;
+    const centerY = height - 10;
+
+    // Arc path points
+    const startX = centerX - normalizedRadius;
+    const endX = centerX + normalizedRadius;
+    const d = `M ${startX} ${centerY} A ${normalizedRadius} ${normalizedRadius} 0 0 1 ${endX} ${centerY}`;
 
     return (
-        <svg width="200" height="100" viewBox="0 0 120 60">
-            {/* Background arc */}
-            <path
-                d="M10 60 A50 50 0 0 1 110 60"
-                stroke="#e5e7eb"
-                strokeWidth="12"
-                fill="none"
-            />
-
-            {/* Progress arc */}
-            <path
-                d="M10 60 A50 50 0 0 1 110 60"
-                stroke={color}
-                strokeWidth="12"
-                fill="none"
-                strokeDasharray={circumference}
-                strokeDashoffset={offset}
-                strokeLinecap="round"
-                fillOpacity="0"
-            />
-
-        </svg>
+        <Box sx={{ position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center", mt: 1 }}>
+            <svg height={height} width={width} viewBox={`0 0 ${width} ${height}`}>
+                {/* Background */}
+                <path
+                    d={d}
+                    fill="none"
+                    stroke="#f3f4f6"
+                    strokeWidth={stroke}
+                    strokeLinecap="round"
+                />
+                {/* Progress */}
+                <path
+                    d={d}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={stroke}
+                    strokeDasharray={`${circumference} ${circumference}`}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)" }}
+                />
+            </svg>
+            <Box
+                sx={{
+                    position: "absolute",
+                    bottom: 12,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    textAlign: "center"
+                }}
+            >
+                <Typography variant="h4" component="div" sx={{ fontWeight: 800, color: color, fontSize: "2rem", lineHeight: 1 }}>
+                    {displayValue}
+                </Typography>
+            </Box>
+        </Box>
     );
 };
 
@@ -148,7 +176,7 @@ const TeacherDash = () => {
                 },
                 body: JSON.stringify({
                     topicId,
-                    newStatus: "Published"
+                    newStatus: "Approved"
                 }),
             });
 
@@ -234,48 +262,23 @@ const TeacherDash = () => {
                             <Grid item xs={12} sm={6} md={3} lg={3} key={index}>
                                 <Card
                                     sx={{
-                                        borderRadius: "16px",
-                                        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                                        border: `2px solid ${item.color}20`,
-                                        transition: "all 0.3s ease",
-                                        "&:hover": {
-                                            transform: "translateY(-4px)",
-                                            boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-                                        }
+                                        borderRadius: "24px",
+                                        boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)",
+                                        border: "1px solid rgba(0,0,0,0.05)",
+                                        height: "100%",
+                                        p: 3,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: "transform 0.2s",
+                                        "&:hover": { transform: "translateY(-4px)" }
                                     }}
                                 >
-                                    <Box sx={{ p: 6, textAlign: "center" }} className="w-70">
-                                        {/* Hemisphere Progress */}
-                                        <Box sx={{ display: "flex", justifyContent: "center", mb: -4 }}>
-                                            <HemisphereProgress
-                                                value={item.progress}
-                                                color={item.color}
-                                            />
-                                        </Box>
-
-                                        {/* Card Content */}
-                                        <Typography
-                                            variant="h4"
-                                            sx={{
-                                                fontWeight: 700,
-                                                color: item.color,
-                                                mb: 1
-                                            }}
-                                        >
-                                            {item.value || 0}
-                                        </Typography>
-
-                                        <Typography
-                                            variant="body1"
-                                            sx={{
-                                                color: "#6b7280",
-                                                fontWeight: 500,
-                                                fontSize: "0.9rem"
-                                            }}
-                                        >
-                                            {item.label}
-                                        </Typography>
-                                    </Box>
+                                    <HemisphereProgress value={item.progress} color={item.color} displayValue={item.value} />
+                                    <Typography variant="subtitle1" sx={{ color: "#6b7280", fontWeight: 600, mt: 1 }}>
+                                        {item.label}
+                                    </Typography>
                                 </Card>
                             </Grid>
                         ))}
