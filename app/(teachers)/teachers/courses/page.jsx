@@ -1,53 +1,66 @@
-import React from "react";
-import { Grid } from "@mui/material";
-import { Masonry } from "@mui/lab";
-import Coursecard from "../../../client/components/Coursecard";
-import { Filter } from "lucide-react";
+"use client";
 
-async function Course() {
-  // Use the full URL for server-side fetch
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : 'http://localhost:3000';
-  
-  const response = await fetch(`${baseUrl}/api/teacher/display`);
+import React, { useEffect, useState } from 'react';
+import TeacherCoursecard from '@/app/client/components/TeacherCoursecard';
+import { CircularProgress, Typography, Box, Grid } from '@mui/material';
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch data");
-  }
+const Page = () => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  const data = await response.json();
-  const mydata = data.courses || []; // Handle the nested structure
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const response = await fetch(`/api/teacher/display`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch courses');
+                }
+                const data = await response.json();
+                setCourses(data.courses);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, []);
 
-  return (
-    <>
-      <div className="pt-25 text-5xl p-6 flex flex-row justify-between mr-5 ">
-        <div>
-           My Courses
-        </div>
-     
-      <button className=" rounded-4xl border-2 border-black p-2">
-        <Filter/>
-      </button>
-      </div>
-      
-      <div className=" w-90vw text-black  p-5">
-        <Grid container spacing={5}>
-          {mydata.map((item) => (
-               <Grid item xs={12} sm={6} md={4} lg={3} key={item.course_id}>
-              <Coursecard 
-                id={item.course_id} 
-                Course={item.name} 
-                unitCount={item.unit_count}
-                topicCount={item.topic_count}
-              />
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Typography color="error">{error}</Typography>
+            </Box>
+        );
+    }
+
+    return (
+        <div className="p-4">
+            <h1 className="text-2xl font-bold mb-4">Your Courses</h1>
+            <Grid container spacing={3}>
+                {courses.map((course) => (
+                    <Grid item xs={12} sm={6} md={4} key={course.course_id}>
+                        <TeacherCoursecard
+                            id={course.course_id}
+                            courseId={course.course_code}
+                            Course={course.name}
+                            unitCount={course.unit_count}
+                            topicCount={course.topic_count}
+                        />
+                    </Grid>
+                ))}
             </Grid>
-          ))}
-        </Grid>
-        
-      </div>
-    </>
-  );
-}
+        </div>
+    );
+};
 
-export default Course;
+export default Page;
