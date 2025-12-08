@@ -12,6 +12,14 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
       onClick={() => {
         // Navigate to courses page with program filter
         router.push(`/admin/courses?program=${encodeURIComponent(programName)}`);
+
+const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
+  return (
+    <Card 
+      className="h-full transition-all duration-300 hover:shadow-lg  cursor-pointer border-l-4 border-l-blue-500"
+      onClick={() => {
+        // Navigate to program details or courses within this program
+        window.location.href = `/admin/programs/${id}`;
       }}
     >
       <CardContent className="p-6">
@@ -21,11 +29,15 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
             <Typography
               variant="h6"
               component="h3"
+            <Typography 
+              variant="h6" 
+              component="h3" 
               className="font-bold text-gray-800 leading-tight flex-1"
             >
               {programName}
             </Typography>
             <IconButton
+            <IconButton 
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
@@ -48,6 +60,7 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
           {/* Program Code */}
           <Box className="flex items-center gap-2 mb-3">
             <Chip
+            <Chip 
               label={programCode}
               size="small"
               variant="outlined"
@@ -60,6 +73,8 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
           <Box className="flex items-center gap-2 mb-4">
             <Typography
               variant="body2"
+            <Typography 
+              variant="body2" 
               className="text-gray-600 flex-1"
             >
               {schoolName}
@@ -73,6 +88,11 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
               className="text-blue-600 font-medium hover:text-blue-800"
             >
               View Courses →
+            <Typography 
+              variant="caption" 
+              className="text-blue-600 font-medium hover:text-blue-800"
+            >
+              View Program Details →
             </Typography>
           </Box>
         </Box>
