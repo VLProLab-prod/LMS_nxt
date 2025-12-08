@@ -1,8 +1,24 @@
-export default async function SchoolsPage() {
-  const res = await fetch("http://localhost:3000/api/navigation/schools", {
-    cache: "no-store"
-  });
-  const schools = await res.json();
+"use client";
+import { useEffect, useState } from "react";
+
+export default function SchoolsPage() {
+  const [schools, setSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/navigation/schools")
+      .then((res) => res.json())
+      .then((data) => {
+        setSchools(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div style={{ padding: "20px" }}>

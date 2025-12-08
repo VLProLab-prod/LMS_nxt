@@ -1,11 +1,27 @@
-export default async function ProgramsPage({ params }) {
-  const { school_id } = await params;
+"use client";
+import { useEffect, useState, use } from "react";
 
-  const res = await fetch(
-    `http://localhost:3000/api/navigation/schools/${school_id}/programs`,
-    { cache: "no-store" }
-  );
-  const programs = await res.json();
+export default function ProgramsPage({ params }) {
+  const unwrappedParams = use(params);
+  const { school_id } = unwrappedParams;
+  const [programs, setPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!school_id) return;
+    fetch(`/api/navigation/schools/${school_id}/programs`)
+      .then((res) => res.json())
+      .then((data) => {
+        setPrograms(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [school_id]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div style={{ padding: "20px" }}>

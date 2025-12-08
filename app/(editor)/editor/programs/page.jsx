@@ -1,21 +1,34 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import EditorProgramcard from "@/app/client/components/EditorProgramcard";
 
-async function Programs() {
-  // Use the full URL for server-side fetch
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+function Programs() {
+  const [programs, setPrograms] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const response = await fetch(`${baseUrl}/api/editor/programs`);
+  useEffect(() => {
+    async function fetchPrograms() {
+      try {
+        const response = await fetch('/api/editor/programs');
+        if (!response.ok) {
+          throw new Error("Failed to fetch programs data");
+        }
+        const data = await response.json();
+        setPrograms(data.programs || []);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPrograms();
+  }, [])
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch programs data");
-  }
-
-  const data = await response.json();
-  const programs = data.programs || []; // Handle the nested structure
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <>

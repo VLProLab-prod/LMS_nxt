@@ -1,11 +1,27 @@
-export default async function UnitsPage({ params }) {
-  const { course_id } = await params;
+"use client";
+import { useEffect, useState, use } from "react";
 
-  const res = await fetch(
-    `http://localhost:3000/api/navigation/courses/${course_id}/units`,
-    { cache: "no-store" }
-  );
-  const units = await res.json();
+export default function UnitsPage({ params }) {
+  const unwrappedParams = use(params);
+  const { course_id } = unwrappedParams;
+  const [units, setUnits] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!course_id) return;
+    fetch(`/api/navigation/courses/${course_id}/units`)
+      .then((res) => res.json())
+      .then((data) => {
+        setUnits(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [course_id]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div style={{ padding: "20px" }}>

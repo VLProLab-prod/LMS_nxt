@@ -1,11 +1,27 @@
-export default async function CoursesPage({ params }) {
-  const { program_id } = await params;
+"use client";
+import { useEffect, useState, use } from "react";
 
-  const res = await fetch(
-    `http://localhost:3000/api/navigation/programs/${program_id}/courses`,
-    { cache: "no-store" }
-  );
-  const courses = await res.json();
+export default function CoursesPage({ params }) {
+  const unwrappedParams = use(params);
+  const { program_id } = unwrappedParams;
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!program_id) return;
+    fetch(`/api/navigation/programs/${program_id}/courses`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCourses(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [program_id]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div style={{ padding: "20px" }}>
