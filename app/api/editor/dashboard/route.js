@@ -72,7 +72,7 @@ export async function GET() {
 
           // Topics In Progress List (Everything except Planned)
           // We want to show Scripted, Editing, Post-Editing, Ready, Under Review, Approved, Published
-          if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Published") {
+          if (topic.workflowStatus !== "Planned") {
             topicsInProgress.push({
               content_id: topic.id,
               topic_title: topic.title,

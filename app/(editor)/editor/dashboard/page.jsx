@@ -19,7 +19,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Tooltip
+  Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from "@mui/material";
 import { Edit, Visibility, ExpandMore, VideoCall, Upload, CheckCircle, Description, Slideshow, FolderZip, ReportProblem, Search } from "@mui/icons-material";
 
@@ -43,9 +47,18 @@ const EditorDash = () => {
   const [additionalLink, setAdditionalLink] = useState(""); // ✨ New State
   const [viewedFeedbackTopics, setViewedFeedbackTopics] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
   const [canPublish, setCanPublish] = useState(false);
 
   const editingTopics = (topicsInProgress || []).filter(topic => {
+    // Filter by status
+    if (filterStatus !== "All") {
+      if (filterStatus === "In Editing" && !['Editing', 'Scripted', 'Post_Editing'].includes(topic.workflow_status)) return false;
+      if (filterStatus === "Under Review" && !['Under_Review', 'ReadyForVideoPrep'].includes(topic.workflow_status)) return false;
+      if (filterStatus === "Approved" && topic.workflow_status !== 'Approved') return false;
+      if (filterStatus === "Published" && topic.workflow_status !== 'Published') return false;
+    }
+
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -216,11 +229,10 @@ const EditorDash = () => {
           <Grid container spacing={3} direction="row" className="pt-8 px-20">
             {[
               { label: "Total Topics", value: stats.totalTopics, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
-              { label: "Published", value: stats.published, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
-              { label: "Approved", value: stats.approved, bg: "rgba(16,185,129,0.1)", color: "#047857", borderColor: "#10b981" },
               { label: "In Editing", value: stats.inEditing + (stats.scripted || 0), bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
               { label: "Under Review", value: stats.underReview, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7" },
-              { label: "Ready for Video", value: stats.readyForVideo, bg: "rgba(6,182,212,0.1)", color: "#0e7490", borderColor: "#06b6d4" },
+              { label: "Approved", value: stats.approved, bg: "rgba(16,185,129,0.1)", color: "#047857", borderColor: "#10b981" },
+              { label: "Published", value: stats.published, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
             ].map((item, index) => (
               <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
                 <Card
@@ -296,6 +308,22 @@ const EditorDash = () => {
                   }}
                 />
               </Box>
+
+              <FormControl size="small" sx={{ minWidth: 200, bgcolor: 'white', borderRadius: 1 }}>
+                <InputLabel>Filter by Status</InputLabel>
+                <Select
+                  value={filterStatus}
+                  label="Filter by Status"
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  <MenuItem value="All">All Statuses</MenuItem>
+                  <MenuItem value="In Editing">In Editing</MenuItem>
+                  <MenuItem value="Under Review">Under Review</MenuItem>
+                  <MenuItem value="Approved">Approved</MenuItem>
+                  <MenuItem value="Published">Published</MenuItem>
+                </Select>
+              </FormControl>
 
               <TextField
                 size="small"
