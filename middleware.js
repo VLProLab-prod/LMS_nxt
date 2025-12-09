@@ -3,27 +3,35 @@ import { NextResponse } from 'next/server'
 export function middleware(request) {
     const path = request.nextUrl.pathname
 
+    // Debug log (server-side)
+    // console.log(`[Middleware] Checking path: ${path}`)
+
     // 1. Define Public Paths (No Login Required)
-    const publicPaths = ['/login', '/credits']
-    const isPublicPath = publicPaths.includes(path) || path === '/api/auth/login'
+    // explicit exact matches
+    const publicPaths = ['/login', '/credits', '/api/auth/login']
+
+    // Check if current path IS a public path
+    // We allow /login, /credits, and /api/auth/login explicitly.
+    // We also want to allow static assets which are handled by the matcher config below, 
+    // but strictly checking here doesn't hurt.
+    const isPublicPath = publicPaths.some(p => path === p || path.startsWith('/api/auth/login'))
 
     // 2. Check for Auth Token (userId cookie)
     const token = request.cookies.get('userId')?.value
 
     // 3. Logic: Redirect unauthenticated users to /login
     if (!token && !isPublicPath) {
-        // Allow access to root '/' (it redirects to login in page.jsx anyway, or we can force it here)
-        if (path === '/') {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
-
-        // Redirect to login for all other protected routes
+        // console.log(`[Middleware] No token found for ${path}, redirecting to /login`)
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // 4. Logic: (Optional) If logged in and visiting /login, could redirect to dashboard, 
-    // but we'll leave it open as requested to ensuring they can just "go into the pages" is the main denied action.
+    // 4. If token exists, verify it isn't empty/dummy (basic check)
+    if (token && !isPublicPath) {
+        // We allow them to proceed.
+        return NextResponse.next()
+    }
 
+    // 5. Default allow for public paths
     return NextResponse.next()
 }
 
@@ -31,11 +39,11 @@ export function middleware(request) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except:
+         * Match all request paths except for the ones starting with:
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - images/assets (common extensions)
+         * - public folder files (images/assets)
          */
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],

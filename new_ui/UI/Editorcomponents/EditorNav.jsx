@@ -115,7 +115,15 @@ const EditorNav = () => {
           <div className="mt-auto">
             <button
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-red-500 hover:bg-red-100 transition-all duration-200"
-              onClick={() => router.push('/login')}
+              onClick={async () => {
+                try {
+                  await fetch('/api/auth/logout', { method: 'POST' });
+                  document.cookie = "userId=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+                  router.push('/login');
+                } catch (error) {
+                  console.error("Logout failed", error);
+                }
+              }}
             >
               <LogOut size={20} /> Sign Out
             </button>

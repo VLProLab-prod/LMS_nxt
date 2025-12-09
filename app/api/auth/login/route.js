@@ -136,7 +136,7 @@ export async function POST(req) {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      // No maxAge means it's a session cookie (deleted when browser closes)
     });
 
     return response;

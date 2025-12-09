@@ -20,12 +20,19 @@ const AdminNav = () => {
 
   const router = useRouter();
 
-  const handleLogout = () => {
-    // Clear cookies
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    document.cookie = "userId=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    // Redirect to home/login
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      // Call Logout API to clear cookies server-side
+      await fetch('/api/auth/logout', { method: 'POST' });
+
+      // Also clear client-side just in case
+      document.cookie = "userId=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+
+      // Redirect to login
+      router.push('/login');
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
 
   return (
