@@ -60,19 +60,31 @@ export async function GET(req) {
         const topicName = topic.title || "Untitled";
 
         let teacherName = topic.section.profName;
+        console.log(`[Download] Initial ProfName: '${teacherName}'`);
+
         const isPlaceholder = !teacherName || ["tbd", "to be decided", "unknown"].includes(teacherName.toLowerCase());
+        console.log(`[Download] Is Placeholder? ${isPlaceholder}`);
 
         if (isPlaceholder) {
             // Find assigned teacher from course
-            const teachers = topic.section.course.assignments
+            const assignments = topic.section.course.assignments || [];
+            console.log(`[Download] Found ${assignments.length} assignments for course.`);
+
+            const teachers = assignments
                 .map(a => a.user)
-                .filter(u => u.role && u.role.roleName === 'Teacher');
+                .filter(u => {
+                    const isTeacher = u.role && u.role.roleName === 'Teacher';
+                    console.log(`[Download] Checking user ${u.email} with role '${u.role?.roleName}': ${isTeacher}`);
+                    return isTeacher;
+                });
 
             if (teachers.length > 0) {
                 // Use the first assigned teacher found
                 teacherName = `${teachers[0].firstName} ${teachers[0].lastName || ''}`.trim();
+                console.log(`[Download] Resolved Teacher Name: ${teacherName}`);
             } else {
                 teacherName = "TBD";
+                console.log(`[Download] No teachers found in assignments. Defaulting to TBD.`);
             }
         }
 
