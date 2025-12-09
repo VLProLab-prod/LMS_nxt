@@ -172,14 +172,14 @@ const CreditsPage = () => {
             name: 'K Suraj Das',
             role: 'Developer',
             github: "https://github.com/suraj211223",
-            linkedin: "www.linkedin.com/in/suraj-das-8b2896232"
+            linkedin: "https://www.linkedin.com/in/suraj-das-8b2896232"
         },
         {
             id: 2,
             name: 'Rithesh K R',
             role: 'Developer',
             github: 'https://github.com/Rithesh077',
-            linkedin: 'www.linkedin.com/in/rithesh-k-r-284315325'
+            linkedin: 'https://www.linkedin.com/in/rithesh-k-r-284315325'
         },
         {
             id: 3,
