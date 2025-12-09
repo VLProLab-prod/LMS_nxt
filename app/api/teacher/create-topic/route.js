@@ -18,6 +18,11 @@ export async function POST(req) {
       );
     }
 
+    // Get User from Cookie
+    const { cookies } = require("next/headers");
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("userId")?.value;
+
     // Insert the new topic into the database
     const result = await prisma.contentItem.create({
       data: {
@@ -25,6 +30,7 @@ export async function POST(req) {
         title: topicName,
         estimatedDurationMin: parseInt(duration) || 0,
         workflowStatus: "Planned",
+        ...(userId && { uploadedByEditorId: parseInt(userId) })
       },
     });
 

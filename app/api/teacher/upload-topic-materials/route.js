@@ -79,41 +79,26 @@ export async function POST(req) {
         });
 
         // -------------------------------------------------------------
-        // LOGIC: Set Teacher Name if missing ("one who uploads first")
+        // LOGIC: Set Uploader (Editor/Teacher) Reference
         // -------------------------------------------------------------
         if (userId) {
-            // 1. Get Uploader Name
-            const uploader = await prisma.user.findUnique({
-                where: { id: parseInt(userId) },
-                select: { firstName: true, lastName: true }
+            const uploaderId = parseInt(userId);
+
+            // Update the topic to link the uploader
+            // This ensures we can grab their name later for file naming
+            await prisma.contentItem.update({
+                where: { id: topicIdInt },
+                data: {
+                    uploadedByEditorId: uploaderId // This field was added to schema for exactly this purpose
+                }
             });
 
-            if (uploader) {
-                const teacherName = `${uploader.firstName || ""} ${uploader.lastName || ""}`.trim();
-
-                // 2. Find the Section ID for this Topic
-                const topicItem = await prisma.contentItem.findUnique({
-                    where: { id: topicIdInt },
-                    select: { sectionId: true }
-                });
-
-                if (topicItem) {
-                    // 3. Check if profName is already set
-                    const section = await prisma.courseSection.findUnique({
-                        where: { id: topicItem.sectionId },
-                        select: { profName: true }
-                    });
-
-                    // 4. Update ONLY if empty/null
-                    if (!section?.profName) {
-                        await prisma.courseSection.update({
-                            where: { id: topicItem.sectionId },
-                            data: { profName: teacherName }
-                        });
-                        console.log(`Updated profName for Section ${topicItem.sectionId} to: ${teacherName}`);
-                    }
-                }
-            }
+            // Optional: Still update ProfName on Section if missing? 
+            // The user asked to "take the name of the person who uploads it for the first time... to have named"
+            // Since we now rely on uploadedByEditorId for naming in download route, we don't necessarily need to overwrite profName.
+            // But leaving the profName logic might be safer if that's used elsewhere.
+            // However, overwriting profName (Section Level) based on a Topic Upload might be too aggressive if multiple people work on a section.
+            // Let's stick to updating the TOPIC'S uploader field.
         }
 
         // Update Workflow Status

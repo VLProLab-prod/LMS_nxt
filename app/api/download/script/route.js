@@ -22,6 +22,7 @@ export async function GET(req) {
                 content: {
                     include: {
                         section: true,
+                        uploadedByEditor: true // Include uploader for fallback
                     },
                 },
             },
@@ -71,7 +72,19 @@ export async function GET(req) {
 
         // 3. Topic Name & Teacher Name
         const topicName = script.content.title || "Untitled";
-        const teacherName = script.content.section.profName || "Unknown";
+
+        // Teacher Name Logic
+        let teacherName = script.content.section.profName;
+        const isPlaceholder = !teacherName || ["tbd", "to be decided", "unknown"].includes(teacherName.toLowerCase());
+
+        if (isPlaceholder) {
+            // Fallback: Use the name of the user who uploaded/created the content
+            if (script.content.uploadedByEditor) {
+                teacherName = `${script.content.uploadedByEditor.firstName} ${script.content.uploadedByEditor.lastName || ''}`.trim();
+            } else {
+                teacherName = "TBD";
+            }
+        }
 
         // Format: U01V01_TopicName_TeacherName.ext
         // We sanitize the names to separate with underscores and remove weird chars if needed, 

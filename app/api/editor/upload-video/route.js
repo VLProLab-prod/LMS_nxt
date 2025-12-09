@@ -37,11 +37,13 @@ export async function POST(req) {
 
         const updateData = {
             videoLink: videoLink,
-            additionalLink: additionalLink, // ✨ Update additional link
+            additionalLink: additionalLink,
             workflowStatus: dbStatus || "Under_Review",
-            uploadedAt: new Date(), // ✨ Set uploaded timestamp
-            reviewRequestAt: new Date(), // ✨ Set review request timestamp (since it's going to review)
-            ...(userId && { assignedEditorId: parseInt(userId) })
+            uploadedAt: new Date(),
+            reviewRequestAt: new Date(),
+            ...(userId && { assignedEditorId: parseInt(userId) }),
+            // Also link as uploader if not already set (e.g. video added by editor)
+            ...(userId && { uploadedByEditorId: parseInt(userId) })
         };
 
         const updatedTopic = await prisma.contentItem.update({
