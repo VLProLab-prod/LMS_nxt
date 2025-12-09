@@ -45,7 +45,14 @@ const EditorDash = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [canPublish, setCanPublish] = useState(false);
 
-  const editingTopics = topicsInProgress || [];
+  const editingTopics = (topicsInProgress || []).filter(topic => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      (topic.assigned_editor_name && topic.assigned_editor_name.toLowerCase().includes(query)) ||
+      (topic.topic_title && topic.topic_title.toLowerCase().includes(query))
+    );
+  });
 
   const workflowSteps = [
     { id: 'Planned', label: 'Planned', color: '#64748b' },
