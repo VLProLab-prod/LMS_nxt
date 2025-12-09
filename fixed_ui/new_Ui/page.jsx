@@ -71,7 +71,7 @@ export default function LoginPage() {
             variant="h3"
             sx={{ fontWeight: "bold", mb: 8, color: "#000" }}
           >
-            WELCOME TO <br />
+            WELCOME TO <br/>
             VL-PROLAB
           </Typography>
 
@@ -179,7 +179,7 @@ export default function LoginPage() {
           </form>
 
           <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-            <button className="hover:underline" onClick={() => { route.push("/credits") }}>
+            <button className="hover:underline" onClick={()=>{route.push("/credits")}}>
               View Credits
             </button>
           </Box>
@@ -206,3 +206,4 @@ export default function LoginPage() {
     </Box>
   );
 }
+
