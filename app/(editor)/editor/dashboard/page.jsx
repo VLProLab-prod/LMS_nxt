@@ -56,7 +56,6 @@ const EditorDash = () => {
       if (filterStatus === "In Editing" && !['Editing', 'Scripted', 'Post_Editing'].includes(topic.workflow_status)) return false;
       if (filterStatus === "Under Review" && !['Under_Review', 'ReadyForVideoPrep'].includes(topic.workflow_status)) return false;
       if (filterStatus === "Approved" && topic.workflow_status !== 'Approved') return false;
-      if (filterStatus === "Published" && topic.workflow_status !== 'Published') return false;
     }
 
     if (!searchQuery) return true;
@@ -321,7 +320,6 @@ const EditorDash = () => {
                   <MenuItem value="In Editing">In Editing</MenuItem>
                   <MenuItem value="Under Review">Under Review</MenuItem>
                   <MenuItem value="Approved">Approved</MenuItem>
-                  <MenuItem value="Published">Published</MenuItem>
                 </Select>
               </FormControl>
 
