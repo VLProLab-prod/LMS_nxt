@@ -50,7 +50,7 @@ export default function Course() {
     }
 
     fetchData();
-  }, []); // Empty array means this runs once when the component mounts
+  }, [searchParams]); // Re-run if searchParams change (though unlikely component mount issues, good practice)
 
   // --- ✨ Step 4: Apply filters when state changes ---
   useEffect(() => {
