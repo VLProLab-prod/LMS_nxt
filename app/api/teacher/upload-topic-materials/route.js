@@ -84,14 +84,36 @@ export async function POST(req) {
         const topicDir = path.join(STORAGE_PATH, topicIdInt.toString());
         await ensureDir(topicDir);
 
+        // Helper to remove existing files of a certain type (to prevent collisions like doc.pdf vs doc.docx)
+        const clearOld = async (prefix) => {
+            try {
+                const files = await fs.readdir(topicDir);
+                for (const f of files) {
+                    if (f.startsWith(prefix + ".")) {
+                        await fs.unlink(path.join(topicDir, f)).catch(() => { });
+                    }
+                }
+            } catch (e) { }
+        };
+
         if (pptFileData) {
-            await fs.writeFile(path.join(topicDir, "ppt.pptx"), pptFileData);
+            await clearOld("ppt");
+            // Preserve original extension if possible, default to .pptx
+            const ext = (pptFile && pptFile.name) ? path.extname(pptFile.name) : ".pptx";
+            // Ensure extension is safe
+            const safeExt = ext || ".pptx";
+            await fs.writeFile(path.join(topicDir, `ppt${safeExt}`), pptFileData);
         }
+
         if (docFileData) {
-            // We default to .pdf for the "doc" slot usually, but let's just call it doc.pdf for consistency with download logic
-            await fs.writeFile(path.join(topicDir, "doc.pdf"), docFileData);
+            await clearOld("doc");
+            const ext = (courseMaterialFile && courseMaterialFile.name) ? path.extname(courseMaterialFile.name) : ".pdf";
+            const safeExt = ext || ".pdf";
+            await fs.writeFile(path.join(topicDir, `doc${safeExt}`), docFileData);
         }
+
         if (zipFileData) {
+            await clearOld("refs");
             await fs.writeFile(path.join(topicDir, "refs.zip"), zipFileData);
         }
 

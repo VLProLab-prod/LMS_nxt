@@ -43,32 +43,35 @@ export async function GET(req) {
         let contentType = "application/octet-stream";
         let diskFilename = "";
 
-        if (type === "ppt") {
-            extension = ".pptx";
-            contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-            diskFilename = "ppt.pptx";
-        } else if (type === "doc") {
-            extension = ".pdf"; // Defaulting to pdf
-            contentType = "application/pdf";
-            diskFilename = "doc.pdf"; // Matches upload save name
-        } else if (type === "zip") {
-            extension = ".zip";
-            contentType = "application/zip";
-            diskFilename = "refs.zip";
-        } else {
-            return NextResponse.json({ error: "Invalid type" }, { status: 400 });
-        }
+        let searchPrefix = "";
+        if (type === "ppt") searchPrefix = "ppt.";
+        else if (type === "doc") searchPrefix = "doc.";
+        else if (type === "zip") searchPrefix = "refs.";
+        else return NextResponse.json({ error: "Invalid type" }, { status: 400 });
 
         // --- 1. Check Disk Storage (Volume) ---
-        const diskFilePath = path.join(STORAGE_PATH, id.toString(), diskFilename);
+        const topicDir = path.join(STORAGE_PATH, id.toString());
+
         try {
-            // Try to read from disk
-            const diskBuffer = await fs.readFile(diskFilePath);
-            fileData = diskBuffer;
-            // console.log("Served from Disk:", diskFilePath);
-        } catch (err) {
-            // File not on disk, fall through to DB check
-            // console.log("File not on disk, checking DB...");
+            const files = await fs.readdir(topicDir);
+            const match = files.find(f => f.startsWith(searchPrefix));
+
+            if (match) {
+                fileData = await fs.readFile(path.join(topicDir, match));
+                // Determine mime/ext
+                const ext = path.extname(match).toLowerCase();
+                extension = ext;
+
+                // Set Content Type
+                if (ext === ".pptx") contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+                else if (ext === ".ppt") contentType = "application/vnd.ms-powerpoint";
+                else if (ext === ".pdf") contentType = "application/pdf";
+                else if (ext === ".docx") contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                else if (ext === ".doc") contentType = "application/msword";
+                else if (ext === ".zip") contentType = "application/zip";
+            }
+        } catch (e) {
+            // Not found or error
         }
 
         // --- 2. Fallback to Database (REMOVED) ---

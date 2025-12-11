@@ -74,25 +74,31 @@ export async function GET(req) {
         let contentType = "application/octet-stream";
         let diskFilename = "";
 
-        if (type === "ppt") {
-            filename = `${filenameBase}.pptx`;
-            contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-            diskFilename = "ppt.pptx";
-        } else if (type === "doc") {
-            filename = `${filenameBase}.pdf`; // Defaulting to pdf usually
-            contentType = "application/pdf";
-            diskFilename = "doc.pdf";
-        } else if (type === "zip") {
-            filename = `${filenameBase}.zip`;
-            contentType = "application/zip";
-            diskFilename = "refs.zip";
-        }
+        let searchPrefix = "";
+        if (type === "ppt") searchPrefix = "ppt.";
+        else if (type === "doc") searchPrefix = "doc.";
+        else if (type === "zip") searchPrefix = "refs.";
 
         // --- 1. Check Disk Storage (Volume) ---
-        const diskFilePath = path.join(STORAGE_PATH, topicId, diskFilename);
+        const topicDir = path.join(STORAGE_PATH, topicId);
         try {
-            const diskBuffer = await fs.readFile(diskFilePath);
-            fileData = diskBuffer;
+            const files = await fs.readdir(topicDir);
+            const match = files.find(f => f.startsWith(searchPrefix));
+
+            if (match) {
+                fileData = await fs.readFile(path.join(topicDir, match));
+                const ext = path.extname(match).toLowerCase();
+
+                // Update filename with actual extension
+                filename = `${filenameBase}${ext}`;
+
+                if (ext === ".pptx") contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+                else if (ext === ".ppt") contentType = "application/vnd.ms-powerpoint";
+                else if (ext === ".pdf") contentType = "application/pdf";
+                else if (ext === ".docx") contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                else if (ext === ".doc") contentType = "application/msword";
+                else if (ext === ".zip") contentType = "application/zip";
+            }
         } catch (e) {
             // Not on disk
         }
