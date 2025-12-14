@@ -38,7 +38,11 @@ export async function GET(req) {
                 program: true, // Fetch program details
                 sections: {
                     include: {
-                        contents: true
+                        contents: {
+                            include: {
+                                contentscript: true
+                            }
+                        }
                     }
                 }
             }
@@ -81,7 +85,11 @@ export async function GET(req) {
                             unit_title: section.title,
                             program_name: course.program?.programName || "Unknown Program", // Map program name
                             videoLink: topic.videoLink,
-                            additionalLink: topic.additionalLink // Return additional link
+                            videoLink: topic.videoLink,
+                            additionalLink: topic.additionalLink, // Return additional link
+                            has_ppt: !!topic.contentscript?.pptFileData,
+                            has_doc: !!topic.contentscript?.docFileData,
+                            has_zip: !!topic.contentscript?.zipFileData
                         });
                     }
                 });
