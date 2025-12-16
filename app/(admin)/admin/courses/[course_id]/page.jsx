@@ -28,6 +28,8 @@ export default function AdminCourseDetail({ params }) {
 
     const [course, setCourse] = useState(null);
     const [expandedUnit, setExpandedUnit] = useState(null);
+    const [currentTopic, setCurrentTopic] = useState(null);
+    const [openReviewModal, setOpenReviewModal] = useState(false);
     const router = useRouter();
 
     const [loading, setLoading] = useState(true);
