@@ -271,6 +271,7 @@ export default function CourseStructureDesign() {
                             // Logic for button requirements
                             const isScriptingDone = topicStatus !== "planned";
                             const isReviewStage = topicStatus === "under_review"; // Updated to match DB
+                            const hasMaterials = topic.script?.ppt || topic.script?.doc || topic.script?.zip;
 
                             return (
                               <Paper
@@ -405,7 +406,7 @@ export default function CourseStructureDesign() {
                                     </Tooltip>
                                   )}
 
-                                  {canApprove && topicStatus === "scripted" && ( // Approve Script Button
+                                  {canApprove && topicStatus === "scripted" && (!hasMaterials || topic.materialsApproved) && ( // Approve Script Button (Text only OR after materials approved)
                                     <Tooltip title="Approve Script (Send to Editor)">
                                       <IconButton
                                         size="small"
@@ -417,7 +418,7 @@ export default function CourseStructureDesign() {
                                     </Tooltip>
                                   )}
 
-                                  {canApprove && (topic.script?.ppt || topic.script?.doc || topic.script?.zip) && !topic.materialsApproved && topicStatus !== "published" && (
+                                  {canApprove && hasMaterials && !topic.materialsApproved && topicStatus !== "published" && (
                                     <Tooltip title="Approve Materials & Send to Editor">
                                       <span>
                                         <IconButton
