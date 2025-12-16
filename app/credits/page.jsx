@@ -187,7 +187,7 @@ const TeamMember = ({ member }) => {
 
 const CreditsPage = () => {
     const router = useRouter();
-
+    //SIX SEVEN
     const teamMembers = [
         {
             id: 1,

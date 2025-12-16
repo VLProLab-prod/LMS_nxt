@@ -417,6 +417,31 @@ export default function CourseStructureDesign() {
                                     </Tooltip>
                                   )}
 
+                                  {canApprove && (topic.script?.ppt || topic.script?.doc || topic.script?.zip) && !topic.materialsApproved && topicStatus !== "published" && (
+                                    <Tooltip title="Approve Materials & Send to Editor">
+                                      <span>
+                                        <IconButton
+                                          size="small"
+                                          color="warning"
+                                          onClick={() => {
+                                            if (window.confirm("Are you sure you want to approve these materials and send them to the editor?")) {
+                                              fetch("/api/topics/approve-materials", {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ topicId: topic.content_id })
+                                              }).then(res => {
+                                                if (res.ok) fetchCourse();
+                                                else alert("Failed to approve materials");
+                                              });
+                                            }
+                                          }}
+                                        >
+                                          <CheckCircle />
+                                        </IconButton>
+                                      </span>
+                                    </Tooltip>
+                                  )}
+
                                   <Tooltip title="Delete Topic">
                                     <IconButton
                                       size="small"

@@ -18,8 +18,9 @@ import {
     Paper,
     Divider
 } from "@mui/material";
-import { Download, FileText, Presentation, Trash2 } from "lucide-react";
+import { Download, FileText, Presentation, Trash2, MessageSquare, CheckCircle } from "lucide-react";
 import ProgressBar from "@/app/client/components/ProgressBar";
+import ReviewDialogue from "@/app/client/components/ReviewDialogue";
 
 export default function AdminCourseDetail({ params }) {
     const unwrappedParams = use(params);
@@ -27,6 +28,8 @@ export default function AdminCourseDetail({ params }) {
 
     const [course, setCourse] = useState(null);
     const [expandedUnit, setExpandedUnit] = useState(null);
+    const [currentTopic, setCurrentTopic] = useState(null);
+    const [openReviewModal, setOpenReviewModal] = useState(false);
     const router = useRouter();
 
     const [loading, setLoading] = useState(true);
@@ -117,6 +120,65 @@ export default function AdminCourseDetail({ params }) {
             }
         } catch (err) {
             alert("Error deleting topic");
+        }
+    };
+
+    const handleOpenReviewModal = (topic) => {
+        setCurrentTopic(topic);
+        setOpenReviewModal(true);
+    };
+
+    const handleFeedbackSubmit = async (topicId, feedback) => {
+        try {
+            const res = await fetch("/api/teacher/submit-feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topicId, feedback }),
+            });
+
+            if (res.ok) {
+                fetchCourse();
+            } else {
+                alert("Failed to submit feedback");
+            }
+        } catch (error) {
+            console.error("Error submitting feedback:", error);
+        }
+    };
+
+    const handleApproveVideo = async (topicId) => {
+        try {
+            const res = await fetch(`/api/topics/update-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topicId: topicId,
+                    newStatus: 'Published' // Admins publishing directly akin to Teachers
+                }),
+            });
+
+            if (res.ok) {
+                fetchCourse();
+            } else {
+                alert("Failed to approve topic");
+            }
+        } catch (error) {
+            console.error('Error approving topic:', error);
+        }
+    };
+
+    const handleApproveMaterials = async (topicId) => {
+        if (confirm("Approve materials and send to editors?")) {
+            fetch("/api/topics/approve-materials", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topicId: topicId })
+            }).then(res => {
+                if (res.ok) fetchCourse();
+                else alert("Failed to approve materials");
+            });
         }
     };
 
@@ -263,6 +325,34 @@ export default function AdminCourseDetail({ params }) {
                                                                 </Box>
                                                                 {/* Topic Actions */}
                                                                 <Box sx={{ display: "flex", gap: 1 }}>
+                                                                    {/* Admin Review Video Button */}
+                                                                    {topic.videoLink && (
+                                                                        <Tooltip title={topicStatus === "published" ? "Video Published" : "Watch & Review Video"}>
+                                                                            <IconButton
+                                                                                size="small"
+                                                                                color="primary"
+                                                                                onClick={() => handleOpenReviewModal(topic)}
+                                                                            >
+                                                                                <MessageSquare size={18} />
+                                                                            </IconButton>
+                                                                        </Tooltip>
+                                                                    )}
+
+                                                                    {/* Admin Approve Materials Button */}
+                                                                    {!topic.materialsApproved && topicStatus !== 'planned' && (topic.script?.ppt || topic.script?.doc || topic.script?.zip) && (
+                                                                        <Tooltip title="Approve Materials (Send to Editor)">
+                                                                            <IconButton
+                                                                                size="small"
+                                                                                color="warning"
+                                                                                onClick={() => handleApproveMaterials(realTopicId)}
+                                                                            >
+                                                                                <CheckCircle size={18} />
+                                                                            </IconButton>
+                                                                        </Tooltip>
+                                                                    )}
+
+                                                                    <Divider orientation="vertical" flexItem />
+
                                                                     {topic.script?.ppt && (
                                                                         <Tooltip title="Download PPT">
                                                                             <IconButton
@@ -320,6 +410,15 @@ export default function AdminCourseDetail({ params }) {
                     </div>
                 </CardContent>
             </Card>
+
+            <ReviewDialogue
+                open={openReviewModal}
+                onClose={() => setOpenReviewModal(false)}
+                topic={currentTopic}
+                onFeedbackSubmit={handleFeedbackSubmit}
+                onApprove={handleApproveVideo}
+                canApprove={true}
+            />
         </div>
     );
 }
