@@ -18,7 +18,7 @@ import {
     Paper,
     Divider
 } from "@mui/material";
-import { Download, FileText, Presentation, Trash2, MessageSquare, CheckCircle, FileCheck } from "lucide-react";
+import { Download, FileText, Presentation, Trash2, MessageSquare, CheckCircle, FileCheck, Send } from "lucide-react";
 import ProgressBar from "@/app/client/components/ProgressBar";
 import ReviewDialogue from "@/app/client/components/ReviewDialogue";
 
@@ -166,6 +166,21 @@ export default function AdminCourseDetail({ params }) {
             }
         } catch (error) {
             console.error('Error approving topic:', error);
+        }
+    };
+
+    const handleApproveScript = async (topicId) => {
+        if (!window.confirm("Approve script and send to editor?")) return;
+        try {
+            const res = await fetch(`/api/topics/update-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topicId, newStatus: 'Editing' }),
+            });
+            if (res.ok) fetchCourse();
+            else alert("Failed to approve script");
+        } catch (error) {
+            console.error('Error approving script:', error);
         }
     };
 
@@ -339,6 +354,21 @@ export default function AdminCourseDetail({ params }) {
                                                                     )}
 
                                                                     {/* Admin Approve Materials Button */}
+                                                                    {(topicStatus === "scripted" || topicStatus === "Editing") && (!(topic.script?.ppt || topic.script?.doc || topic.script?.zip) || topic.materialsApproved) && (
+                                                                        <Tooltip title={topicStatus === "Editing" ? "Already Sent to Editor" : "Approve Script (Send to Editor)"}>
+                                                                            <span>
+                                                                                <IconButton
+                                                                                    size="small"
+                                                                                    disabled={topicStatus === "Editing"}
+                                                                                    onClick={() => handleApproveScript(realTopicId)}
+                                                                                    sx={{ color: topicStatus === "Editing" ? "gray" : "#f59e0b" }}
+                                                                                >
+                                                                                    <Send size={18} />
+                                                                                </IconButton>
+                                                                            </span>
+                                                                        </Tooltip>
+                                                                    )}
+
                                                                     {!topic.materialsApproved && topicStatus !== 'planned' && (topic.script?.ppt || topic.script?.doc || topic.script?.zip) && (
                                                                         <Tooltip title="Approve Materials (Send to Editor)">
                                                                             <IconButton
