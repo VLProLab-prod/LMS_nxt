@@ -158,6 +158,7 @@ model ContentItem {
   assignedEditorId      Int?    @map("assigned_editor_id")
   practiceQuestionsUrl  String? @map("practice_questions_url")
   referenceMaterialUrl  String? @map("reference_material_url")
+  materialsApproved     Boolean @default(false) @map("materials_approved")
 
   // Timestamps
   createdAt             DateTime @default(now()) @map("created_at")

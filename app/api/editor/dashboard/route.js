@@ -75,7 +75,17 @@ export async function GET() {
 
           // Topics In Progress List (Everything except Planned)
           // We want to show Scripted, Editing, Post-Editing, Ready, Under Review, Approved, Published
-          if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Published") {
+          // BUT: Only show if materials are approved (implied by workflow > Scripted OR boolean flag)
+          // For now, let's use the explicit boolean flag we added to the schema: materialsApproved
+
+          const isMaterialsApproved = topic.materialsApproved === true;
+
+          // Assignment Logic: 
+          // 1. If Unassigned (assignedEditorId is null), show to everyone (Job Board)
+          // 2. If Assigned, ONLY show to the assigned editor
+          const isAssignedToMe = !topic.assignedEditorId || (userId && topic.assignedEditorId === parseInt(userId));
+
+          if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Published" && isMaterialsApproved && isAssignedToMe) {
 
             // CHECK DISK FOR FILES
             let hasPpt = false;

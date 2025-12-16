@@ -156,10 +156,18 @@ export async function POST(req) {
             select: { workflowStatus: true }
         });
 
-        if (topic && topic.workflowStatus === 'Planned') {
+        if (topic) {
+            const updateData = {
+                materialsApproved: false // Reset approval on new upload
+            };
+
+            if (topic.workflowStatus === 'Planned') {
+                updateData.workflowStatus = 'Scripted';
+            }
+
             await prisma.contentItem.update({
                 where: { id: topicIdInt },
-                data: { workflowStatus: 'Scripted' }
+                data: updateData
             });
         }
 
