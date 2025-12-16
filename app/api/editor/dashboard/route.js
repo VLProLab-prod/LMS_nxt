@@ -18,12 +18,13 @@ export async function GET() {
     const userId = cookieStore.get("userId")?.value;
     let canPublish = false;
 
-    if (userId) {
+    if (userId && !isNaN(parseInt(userId))) {
       const user = await prisma.user.findUnique({
         where: { id: parseInt(userId) },
         include: { role: true }
       });
-      canPublish = ["publisher"].includes(user?.role?.roleName?.toLowerCase()) || user?.role?.canPublishContent || false;
+      const roleName = user?.role?.roleName?.toLowerCase();
+      canPublish = (roleName === "publisher") || user?.role?.canPublishContent || false;
     }
 
     // 1. Fetch Active courses (same as course list)
