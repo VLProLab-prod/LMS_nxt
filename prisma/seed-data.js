@@ -1,8 +1,7 @@
 module.exports = {
     "schools": [
         {
-            "id": 1,
-            "name": "School of Management"
+            "name": "School of Commerce, Finance and Accountancy"
         },
         {
             "id": 4,
