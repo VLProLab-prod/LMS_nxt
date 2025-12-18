@@ -99,11 +99,22 @@ export async function GET(req) {
         const topicName = script.content.title || "Untitled";
 
         // Teacher Name Logic
-        let teacherName = script.content.section.profName;
+        let teacherName = "";
+
+        // Priority 1: The actual Uploader (if recorded)
+        if (script.content.uploadedByEditor) {
+            teacherName = `${script.content.uploadedByEditor.firstName || ''} ${script.content.uploadedByEditor.lastName || ''}`.trim();
+        }
+
+        // Priority 2: Section Professor Name
+        if (!teacherName && script.content.section.profName) {
+            teacherName = script.content.section.profName;
+        }
+
         const isPlaceholder = !teacherName || ["tbd", "to be decided", "unknown"].includes(teacherName.toLowerCase());
 
         if (isPlaceholder) {
-            // Priority 1: Find the "Teacher" assigned to this Course
+            // Priority 3: Find the "Teacher" assigned to this Course
             let assignedUser = await prisma.userCourseAssignment.findFirst({
                 where: {
                     courseId: script.content.section.courseId,
@@ -112,7 +123,7 @@ export async function GET(req) {
                 include: { user: true }
             });
 
-            // Priority 2: If no Teacher, find a "Teaching Assistant" assigned to this Course
+            // Priority 4: If no Teacher, find a "Teaching Assistant" assigned to this Course
             if (!assignedUser) {
                 assignedUser = await prisma.userCourseAssignment.findFirst({
                     where: {
