@@ -18,7 +18,7 @@ import {
   Paper,
 } from "@mui/material";
 import { Menu, MenuItem } from "@mui/material";
-import { Trash, FileCheck, CheckCircle, PlayCircle, MessageSquare, Send, Download } from "lucide-react";
+import { Trash, FileCheck, CheckCircle, PlayCircle, MessageSquare, Send, Download, Edit2, Save, X } from "lucide-react";
 import ProgressBar from "../../../../client/components/ProgressBar";
 import Createunitmodal from "../../../../client/components/Createunitmodal";
 import CreateTopicmodal from "../../../../client/components/CreateTopicmodal";
@@ -58,6 +58,64 @@ export default function CourseStructureDesign() {
     const url = `/api/download/script?topicId=${activeDownloadTopic.content_id}&type=${type}`;
     window.open(url, '_blank');
     handleDownloadMenuClose();
+  };
+
+  // Editing State
+  const [editingUnitId, setEditingUnitId] = useState(null);
+  const [editingTopicId, setEditingTopicId] = useState(null);
+  const [editValue, setEditValue] = useState("");
+
+  const handleStartEditUnit = (e, id, currentName) => {
+    e.stopPropagation();
+    setEditingUnitId(id);
+    setEditValue(currentName);
+  };
+
+  const handleSaveUnit = async (e, unitId) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch("/api/teacher/update-unit", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unitId, newTitle: editValue }),
+      });
+      if (res.ok) {
+        setEditingUnitId(null);
+        fetchCourse();
+      } else {
+        alert("Failed to update unit name");
+      }
+    } catch (error) {
+      console.error("Error updating unit:", error);
+    }
+  };
+
+  const handleCancelEditUnit = (e) => {
+    e.stopPropagation();
+    setEditingUnitId(null);
+  };
+
+  const handleStartEditTopic = (topic) => {
+    setEditingTopicId(topic.content_id);
+    setEditValue(topic.name);
+  };
+
+  const handleSaveTopic = async (topicId) => {
+    try {
+      const res = await fetch("/api/teacher/update-topic", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicId, newTitle: editValue }),
+      });
+      if (res.ok) {
+        setEditingTopicId(null);
+        fetchCourse();
+      } else {
+        alert("Failed to update topic name");
+      }
+    } catch (error) {
+      console.error("Error updating topic:", error);
+    }
   };
 
   const [loading, setLoading] = useState(true);
@@ -244,10 +302,38 @@ export default function CourseStructureDesign() {
                     }
                   >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <div className="flex justify-between w-full">
-                        <span className="font-medium">
-                          Unit {unit.order}: {unit.name}
-                        </span>
+                      <div className="flex justify-between w-full items-center mr-4">
+                        {editingUnitId === unitId ? (
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <span className="font-medium text-gray-500">Unit {unit.order}:</span>
+                            <input
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="border rounded px-2 py-1 text-sm text-black"
+                              autoFocus
+                            />
+                            <IconButton size="small" onClick={(e) => handleSaveUnit(e, unit.section_id)} color="primary">
+                              <Save size={18} />
+                            </IconButton>
+                            <IconButton size="small" onClick={handleCancelEditUnit} color="error">
+                              <X size={18} />
+                            </IconButton>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 group">
+                            <span className="font-medium">
+                              Unit {unit.order}: {unit.name}
+                            </span>
+                            <IconButton
+                              size="small"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => handleStartEditUnit(e, unitId, unit.name)}
+                            >
+                              <Edit2 size={16} />
+                            </IconButton>
+                          </div>
+                        )}
                         <span className="text-gray-500 text-sm">
                           {unit.topics ? unit.topics.length : 0} topics
                         </span>
@@ -302,9 +388,38 @@ export default function CourseStructureDesign() {
                                     variant="outlined"
                                     size="small"
                                   />
-                                  <Typography variant="body1" fontWeight={500}>
-                                    {topic.name}
-                                  </Typography>
+                                  {editingTopicId === (topic.content_id) ? (
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="text"
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        className="border rounded px-2 py-1 text-sm text-black w-64"
+                                        autoFocus
+                                      />
+                                      <IconButton size="small" onClick={() => handleSaveTopic(topic.content_id)} color="primary">
+                                        <Save size={16} />
+                                      </IconButton>
+                                      <IconButton size="small" onClick={() => setEditingTopicId(null)} color="error">
+                                        <X size={16} />
+                                      </IconButton>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2 group">
+                                      <Typography variant="body1" fontWeight={500}>
+                                        {topic.name}
+                                      </Typography>
+                                      {!["published", "approved"].includes(topicStatus) && (
+                                        <IconButton
+                                          size="small"
+                                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                          onClick={() => handleStartEditTopic(topic)}
+                                        >
+                                          <Edit2 size={14} />
+                                        </IconButton>
+                                      )}
+                                    </div>
+                                  )}
                                   <Chip
                                     label={`${topic.estimatedTime ||
                                       topic.estimated_duration_min ||
